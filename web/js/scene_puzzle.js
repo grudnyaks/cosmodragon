@@ -61,7 +61,8 @@ G.scenes.puzzle = {
   enter() {
     const idx = S.data.puzzle;
     this.pic = idx % PUZZLE_PICS.length;
-    const sizes = [[2, 2], [2, 2], [3, 2], [3, 2], [3, 3]];
+    const sizes = [[3, 2], [3, 3], [3, 3], [4, 3], [4, 3], [4, 4]];
+    this.ghost = Math.max(0.07, 0.2 - idx * 0.025);
     [this.cols, this.rows] = sizes[Math.min(idx, sizes.length - 1)];
     this.img = document.createElement('canvas'); this.img.width = PW; this.img.height = PH;
     const c = this.img.getContext('2d');
@@ -72,7 +73,7 @@ G.scenes.puzzle = {
     const slots = [];
     const n = this.cols * this.rows;
     // места справа, разложенные сеткой
-    const sc = n <= 4 ? 2 : 3, sr = Math.ceil(n / sc);
+    const sc = n <= 4 ? 2 : n <= 9 ? 3 : 4, sr = Math.ceil(n / sc);
     for (let i = 0; i < n; i++) slots.push({ x: 690 + ((i % sc) + 0.5) * (570 / sc), y: 170 + (Math.floor(i / sc) + 0.5) * (530 / sr) });
     M.shuffle(slots);
     for (let r = 0; r < this.rows; r++) for (let col = 0; col < this.cols; col++) {
@@ -101,7 +102,7 @@ G.scenes.puzzle = {
   up() {
     if (!this.drag) return;
     const p = this.drag.p; this.drag = null;
-    if (M.dist(p.x, p.y, p.tx, p.ty) < 80) {
+    if (M.dist(p.x, p.y, p.tx, p.ty) < Math.min(80, p.w * 0.45)) {
       p.placed = true; Sound.snap();
       G.tween(p, { x: p.tx, y: p.ty }, 0.2, G.ease.outQuad, () => G.burst(p.tx + p.w / 2, p.ty + p.h / 2, { kind: 'star', n: 10, speed: 200 }));
       if (this.pieces.every(q => q.placed)) setTimeout(() => this.win(), 400);
@@ -114,7 +115,7 @@ G.scenes.puzzle = {
     S.data.puzzle++; S.save();
     Sound.win();
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(this.bx + BW / 2 + M.rnd(-200, 200), this.by + M.rnd(0, 200), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
-    UI.reward(5, this.bx + BW / 2, this.by + BH / 2);
+    UI.reward(3 + Math.floor(this.pieces.length / 3), this.bx + BW / 2, this.by + BH / 2);
     Voice.say(M.pick(['Ура! Картинка собрана!', 'Молодец! Какая красота!', 'Здорово получилось!']));
     setTimeout(() => { this.nextBtn.hidden = false; }, 1200);
   },
@@ -124,7 +125,7 @@ G.scenes.puzzle = {
     Art.stars(ctx, 21, 70, t);
     // рамка
     Art.rr(ctx, this.bx - 18, this.by - 18, BW + 36, BH + 36, 26); ctx.fillStyle = '#ffd6f0'; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#2a1650'; ctx.stroke();
-    ctx.save(); ctx.globalAlpha = this.won ? 1 : 0.22; ctx.drawImage(this.img, this.bx, this.by, BW, BH); ctx.restore();
+    ctx.save(); ctx.globalAlpha = this.won ? 1 : this.ghost; ctx.drawImage(this.img, this.bx, this.by, BW, BH); ctx.restore();
     if (!this.won) {
       ctx.strokeStyle = 'rgba(42,22,80,0.35)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]);
       for (let c = 1; c < this.cols; c++) { ctx.beginPath(); ctx.moveTo(this.bx + c * BW / this.cols, this.by); ctx.lineTo(this.bx + c * BW / this.cols, this.by + BH); ctx.stroke(); }

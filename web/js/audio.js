@@ -178,6 +178,12 @@ const Sound = (function () {
     boing() { if (!ok()) return; const t = ac.currentTime; const o = tone(220, t, 0.4, 'triangle', 0.25); o.frequency.exponentialRampToValueAtTime(520, t + 0.15); o.frequency.exponentialRampToValueAtTime(300, t + 0.35); },
     fire() { if (!ok()) return; noise(ac.currentTime, 0.9, 'lowpass', 3000, 300, 0.7, 0.7); },
     snap() { if (!ok()) return; const t = ac.currentTime; tone(700, t, 0.08, 'triangle', 0.3); tone(1050, t + 0.05, 0.2, 'sine', 0.2); },
+    // нота поющего кристалла (0..5)
+    note(i) {
+      if (!ok()) return; const t = ac.currentTime;
+      const f = [523.25, 659.25, 783.99, 1046.5, 880, 587.33][i % 6];
+      tone(f, t, 0.9, 'triangle', 0.22); tone(f * 2, t, 0.5, 'sine', 0.06); tone(f / 2, t, 0.6, 'sine', 0.08);
+    },
     win() {
       if (!ok()) return; const t = ac.currentTime;
       [60, 64, 67, 72, 76, 79, 84].forEach((n, i) => tone(mf(n), t + i * 0.09, 0.6, 'triangle', 0.15));

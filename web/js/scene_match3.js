@@ -3,15 +3,20 @@
 G.scenes.match3 = {
   N: 6, CS: 96, OX: 90, OY: 118, TYPES: 5,
   enter() {
-    this.goal = Math.min(18 + S.data.match * 3, 36);
+    const lvl = S.data.match;
+    this.TYPES = lvl >= 2 ? 6 : 5;
+    this.goal = Math.min(26 + lvl * 4, 60);
+    this.moves = Math.ceil(this.goal / 3.1) + (this.TYPES === 6 ? 7 : 4);
+    this.lost = false;
     this.got = 0; this.state = 'idle'; this.sel = null; this.idle = 0; this.hint = null;
     this.won = false; this.combo = 0; this.fireUsed = false;
     this.dr = { mouth: 0, squash: 0, happy: 0, fire: 0 };
     this.makeBoard();
     this.state = 'busy'; G.wait(1.1, () => { this.state = 'idle'; });
     UI.homeButton(this);
-    this.fireBtn = UI.add(this, { x: 1180, y: 420, r: 52, icon: 'fire', color: '#ff9a3c', hidden: !hasAbility('fire'), pulse: true, onTap: () => this.useFire() });
-    this.again = UI.add(this, { x: 1000, y: 330, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('match3') });
+    this.fires = hasAbility('bigfire') ? 2 : hasAbility('fire') ? 1 : 0;
+    this.fireBtn = UI.add(this, { x: 1180, y: 420, r: 52, icon: hasAbility('bigfire') ? 'bigfire' : 'fire', color: '#ff9a3c', hidden: !this.fires, pulse: true, badge: this.fires > 1 ? this.fires : null, onTap: () => this.useFire() });
+    this.again = UI.add(this, { x: 1000, y: 430, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('match3') });
     Voice.say('Поменяй местами две вкусняшки, чтобы собрать три одинаковых в ряд!');
   },
   makeBoard() {
@@ -35,7 +40,7 @@ G.scenes.match3 = {
     return { c, r };
   },
   down(x, y) {
-    if (this.state !== 'idle' || this.won) return;
+    if (this.state !== 'idle' || this.won || this.lost) return;
     const p = this.cellAt(x, y); if (!p) { this.sel = null; return; }
     this.idle = 0; this.hint = null;
     if (this.sel && Math.abs(this.sel.c - p.c) + Math.abs(this.sel.r - p.r) === 1) { const a = this.sel; this.sel = null; this.trySwap(a, p); return; }
@@ -58,7 +63,7 @@ G.scenes.match3 = {
     this.swapData(a, b);
     G.tween(A, { x: b.c, y: b.r }, 0.18); G.tween(B, { x: a.c, y: a.r }, 0.18);
     G.wait(0.2, () => {
-      if (this.findMatches().length) { this.combo = 0; this.resolve(); }
+      if (this.findMatches().length) { this.combo = 0; this.moves--; this.resolve(); }
       else {
         Sound.boing();
         this.swapData(a, b);
@@ -85,7 +90,9 @@ G.scenes.match3 = {
     const list = forced || this.findMatches();
     if (!list.length) {
       if (!this.findMove()) this.shuffle();
-      this.state = 'idle'; return;
+      this.state = 'idle';
+      if (!this.won && this.moves <= 0 && this.got < this.goal) this.lose();
+      return;
     }
     this.combo++;
     Sound.chime(1 + this.combo * 0.12);
@@ -140,14 +147,22 @@ G.scenes.match3 = {
     if (tries >= 50) for (const col of this.g) for (const t of col) t.ty = M.ri(0, this.TYPES - 1);
     Sound.whoosh();
   },
+  lose() {
+    this.lost = true; this.state = 'busy';
+    Sound.boing();
+    Voice.say('Ходы закончились! Почти получилось. Попробуй ещё раз!');
+    UI.reward(1, 640, 400);
+    setTimeout(() => { this.again.hidden = false; }, 1200);
+  },
   useFire() {
-    if (this.fireUsed || this.state !== 'idle' || this.won) return;
-    this.fireUsed = true; this.fireBtn.hidden = true; this.state = 'busy';
+    if (this.fires <= 0 || this.state !== 'idle' || this.won || this.lost) return;
+    this.fires--; this.fireBtn.badge = this.fires > 1 ? this.fires : null; this.fireBtn.hidden = this.fires <= 0; this.state = 'busy';
     Sound.fire(); this.dr.fire = 0.01;
     G.tween(this.dr, { fire: 1 }, 0.3, G.ease.outQuad, () => G.tween(this.dr, { fire: 0 }, 0.4, G.ease.linear, null, 0.3));
     const r = M.ri(1, this.N - 2), list = [];
     for (let c = 0; c < this.N; c++) list.push({ c, r });
-    for (const p of list) G.burst(this.OX + (p.c + 0.5) * this.CS, this.OY + (r + 0.5) * this.CS, { kind: 'dot', n: 6, colors: ['#ffd23f', '#ff9a3c', '#ff6ab0'], speed: 200 });
+    if (hasAbility('bigfire')) { const cc = M.ri(1, this.N - 2); for (let rr = 0; rr < this.N; rr++) if (rr !== r) list.push({ c: cc, r: rr }); }
+    for (const p of list) G.burst(this.OX + (p.c + 0.5) * this.CS, this.OY + (p.r + 0.5) * this.CS, { kind: 'dot', n: 6, colors: ['#ffd23f', '#ff9a3c', '#ff6ab0'], speed: 200 });
     Voice.say('Огонёк!');
     G.wait(0.4, () => { this.combo = 0; this.resolve(list); });
   },
@@ -162,7 +177,7 @@ G.scenes.match3 = {
   },
   update(dt) {
     this.dr.happy = Math.max(0, this.dr.happy - dt);
-    if (this.state === 'idle' && !this.won) {
+    if (this.state === 'idle' && !this.won && !this.lost) {
       this.idle += dt;
       if (this.idle > 6 && !this.hint) this.hint = this.findMove();
     }
@@ -193,9 +208,11 @@ G.scenes.match3 = {
     UI.progress(ctx, 800, 170, 400, 46, this.got / this.goal, '#ff7eb6');
     Art.treat(ctx, 0, 800, 192, 0.6);
     UI.text(ctx, this.got + ' / ' + this.goal, 1000, 194, 30, '#fff', 'center', true);
+    Art.rr(ctx, 860, 244, 280, 56, 28); ctx.fillStyle = this.moves <= 3 ? 'rgba(255,59,92,0.8)' : 'rgba(42,22,80,0.7)'; ctx.fill();
+    UI.text(ctx, 'Ходов: ' + Math.max(0, this.moves), 1000, 273, 30, '#fff', 'center', true);
     if (this.dr.fire > 0) { // огонь по ряду
       ctx.save(); ctx.globalAlpha = this.dr.fire * 0.5; ctx.fillStyle = '#ffb23a'; ctx.fillRect(OX, OY, N * CS, N * CS); ctx.restore();
     }
   },
-  drawTop(ctx) { UI.drawCounterTopRight(ctx); if (this.won && !this.again.hidden) UI.text(ctx, 'Ещё раз?', 1000, 235, 44, '#fff', 'center', true); },
+  drawTop(ctx) { UI.drawCounterTopRight(ctx); if ((this.won || this.lost) && !this.again.hidden) UI.text(ctx, 'Ещё раз?', 1000, 345, 40, '#fff', 'center', true); },
 };

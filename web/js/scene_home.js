@@ -8,19 +8,23 @@ G.scenes.home = {
     this.rk = { lift: 0, flame: 0 };
     this.blinkT = 2; this.blink = 0; this.taps = 0;
     this.banner = null; this.busy = false;
-    const by = 655, games = [
+    const by = 662, games = [
       { icon: 'map', color: '#ffb23a', scene: 'treasure' },
       { icon: 'puzzle', color: '#3fb8ff', scene: 'puzzle' },
       { icon: 'match', color: '#ff7eb6', scene: 'match3' },
       { icon: 'route', color: '#8f6cf2', scene: 'route' },
       { icon: 'catch', color: '#41d982', scene: 'catch' },
       { icon: 'memory', color: '#ff9a3c', scene: 'memory' },
+      { icon: 'crystals', color: '#38d6c3', scene: 'simon' },
+      { icon: 'constellation', color: '#3a5ad8', scene: 'stars' },
+      { icon: 'bunny', color: '#ff6f91', scene: 'bunny' },
     ];
-    this.gameBtns = games.map((g, i) => UI.add(this, { x: 300 + i * 136, y: by, r: 54, icon: g.icon, color: g.color, bob: true, iconScale: 1.05, onTap: () => { Voice.stop(); G.go(g.scene); } }));
+    this.gameBtns = games.map((g, i) => UI.add(this, { x: 196 + i * 108, y: by, r: 47, icon: g.icon, color: g.color, bob: true, iconScale: 1.12, onTap: () => { Voice.stop(); G.go(g.scene); } }));
     this.feedBtn = UI.add(this, { x: 950, y: 400, r: 58, icon: 'feed', color: '#ffd23f', onTap: () => this.feed() });
     UI.add(this, { x: G.view.x0 + 60, y: 60, r: 38, icon: d.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
     UI.add(this, { x: G.view.x0 + 150, y: 60, r: 38, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
-    this.updBtn = UI.add(this, { x: G.view.x0 + 240, y: 60, r: 38, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
+    UI.add(this, { x: G.view.x0 + 240, y: 60, r: 38, icon: 'skills', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('skills'); } });
+    this.updBtn = UI.add(this, { x: G.view.x0 + 330, y: 60, r: 38, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     if (!this.greeted) { this.greeted = true; setTimeout(() => this.hello(), 700); }
   },
   hello() {
@@ -28,7 +32,7 @@ G.scenes.home = {
     if (d.treats > 0 && d.level < MAX_LEVEL) Voice.say('Дракоша хочет кушать! Нажми на кексик, чтобы покормить его.');
     else if (d.level < MAX_LEVEL) Voice.say('Поиграй в игры, чтобы найти вкусняшки для Дракоши!');
   },
-  dragonScale() { return 0.78 + (S.data.level - 1) * 0.11; },
+  dragonScale() { return 0.78 + (S.data.level - 1) * 0.04; },
   dragonHit(x, y) {
     const s = this.dragonScale(), d = this.dr;
     return Math.abs(x - d.x) < 110 * s && y < d.y - d.lift + 10 && y > d.y - d.lift - 230 * s;
@@ -144,11 +148,12 @@ G.scenes.home = {
     const d = S.data, cx = 640;
     Art.rr(ctx, cx - 230, 18, 460, 108, 30); ctx.fillStyle = 'rgba(42,22,80,0.6)'; ctx.fill();
     UI.text(ctx, d.name, cx, 46, 34, '#ffd6f0', 'center', true);
-    for (let i = 1; i <= MAX_LEVEL; i++) Art.roundStar(ctx, cx - 190 + (i - 1) * 32, 92, 14, i <= d.level ? '#ffd23f' : 'rgba(255,255,255,0.25)', '#2a1650');
+    for (let i = 1; i <= MAX_LEVEL; i++) Art.roundStar(ctx, cx - 202 + (i - 1) * 22, 92, 10, i <= d.level ? '#ffd23f' : 'rgba(255,255,255,0.25)', '#2a1650');
     if (d.level < MAX_LEVEL) {
-      UI.progress(ctx, cx - 20, 76, 230, 32, d.fed / LEVELS[d.level].need, '#ff7eb6');
+      UI.progress(ctx, cx + 20, 76, 190, 32, d.fed / LEVELS[d.level].need, '#ff7eb6');
+      UI.text(ctx, d.fed + '/' + LEVELS[d.level].need, cx + 115, 93, 20, '#fff', 'center', true);
       Art.treat(ctx, 0, cx + 205, 88, 0.45);
-    } else UI.text(ctx, d.beacon ? '★ Маяк сияет ★' : '★ Большой дракон ★', cx + 95, 92, 26, '#ffd23f', 'center', true);
+    } else UI.text(ctx, d.beacon ? 'Маяк сияет!' : 'Звёздный дракон!', cx + 115, 92, 24, '#ffd23f', 'center', true);
   },
   drawTop(ctx) {
     UI.drawCounterTopRight(ctx);
@@ -159,7 +164,7 @@ G.scenes.home = {
       ctx.save(); ctx.translate(b.final ? 560 : 640, 205); ctx.scale(sc * 0.85, sc * 0.85);
       Art.rr(ctx, -330, -90, 660, 180, 50); ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fill(); ctx.lineWidth = 8; ctx.strokeStyle = '#8f6cf2'; ctx.stroke();
       UI.text(ctx, b.final ? b.title : 'Дракоша вырос!', 0, -36, 52, '#8f6cf2', 'center', false);
-      if (!b.final) UI.text(ctx, '★ ' + b.title + ' ★', 0, 34, 44, '#ff7eb6', 'center', false);
+      if (!b.final) { UI.text(ctx, '★ ' + b.title + ' ★', 0, 20, 40, '#ff7eb6', 'center', false); if (LEVELS[b.lvl].short) UI.text(ctx, LEVELS[b.lvl].short, 0, 64, 24, '#5a3fa0', 'center', false); }
       else UI.text(ctx, '★ ★ ★ ★ ★', 0, 34, 44, '#ffd23f', 'center', false);
       ctx.restore();
     }

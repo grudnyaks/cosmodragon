@@ -9,16 +9,23 @@ const MEMORY_FACES = [
   (ctx, t) => Art.treat(ctx, 4, 0, -4, 1.1, t),
   (ctx) => Art.beacon(ctx, 0, 70, 0.75, true, 0),
   (ctx) => Art.meteor(ctx, 0, 0, 40, 0.3, 11),
+  (ctx, t) => Art.treat(ctx, 1, 0, 0, 1.2, t),
+  (ctx, t) => Art.treat(ctx, 2, 0, 0, 1.1, t),
+  (ctx, t) => Art.treat(ctx, 3, 0, 0, 1.2, t),
+  (ctx, t) => Art.treat(ctx, 5, 0, 4, 1.3, t),
+  (ctx, t) => Art.bunny(ctx, 0, 60, 0.62, t, 0),
+  (ctx) => Art.chest(ctx, 0, 34, 0.9, false, 0),
 ];
 
 G.scenes.memory = {
   enter() {
     const lvl = S.data.memory;
-    const pairs = lvl < 2 ? 3 : lvl < 4 ? 4 : 6;
-    const cols = pairs === 3 ? 3 : 4, rows = pairs * 2 / cols;
+    const pairs = lvl < 2 ? 4 : lvl < 4 ? 6 : 8;
+    const cols = 4, rows = pairs * 2 / cols;
     const faces = M.shuffle([...MEMORY_FACES.keys()]).slice(0, pairs);
     const deck = M.shuffle(faces.concat(faces));
-    this.CW = 150; this.CH = 176; const gap = 24;
+    this.CW = pairs === 8 ? 128 : 150; this.CH = pairs === 8 ? 140 : 176; const gap = pairs === 8 ? 16 : 24;
+    this.faceScale = this.CW / 150;
     const W = cols * this.CW + (cols - 1) * gap, H = rows * this.CH + (rows - 1) * gap;
     const ox = 640 - W / 2, oy = 400 - H / 2 + 10;
     this.cards = deck.map((f, i) => ({
@@ -27,9 +34,15 @@ G.scenes.memory = {
     }));
     this.cards.forEach((c, i) => G.tween(c, { appear: 1 }, 0.4, G.ease.outBack, null, i * 0.06));
     this.flipped = []; this.lock = false; this.won = false; this.misses = 0;
+    if (hasAbility('eyes')) { // Зоркие глазки: показать все карточки
+      this.lock = true;
+      G.wait(0.8, () => { this.cards.forEach(c => G.tween(c, { open: 1 }, 0.3)); Voice.say('Дракоша показывает карточки. Запоминай!'); });
+      G.wait(2.9, () => { this.cards.forEach(c => G.tween(c, { open: 0 }, 0.3)); });
+      G.wait(3.3, () => { this.lock = false; });
+    }
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 400, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('memory') });
-    Voice.say('Найди одинаковые картинки! Нажми на карточку, чтобы её перевернуть.');
+    if (!hasAbility('eyes')) Voice.say('Найди одинаковые картинки! Нажми на карточку, чтобы её перевернуть.');
   },
   down(x, y) {
     if (this.lock || this.won) return;
@@ -98,6 +111,7 @@ G.scenes.memory = {
       ctx.fillStyle = c.done ? '#fff6d6' : '#ffffff'; ctx.fill();
       ctx.lineWidth = 6; ctx.strokeStyle = c.done ? '#ffd23f' : '#2a1650'; ctx.stroke();
       ctx.save(); Art.rr(ctx, -w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 16); ctx.clip();
+      ctx.scale(this.faceScale, this.faceScale);
       MEMORY_FACES[c.face](ctx, t);
       ctx.restore();
     }

@@ -101,13 +101,18 @@ const Art = {};
       ctx.fillStyle = DC.crest; ctx.fill(); outline(ctx, 3, DC.line);
     }
     const sx = 140 + sway * 0.4, sy = -82 + sway;
+    if (lvl >= 6) { // хвостик-магнит: звёздочка сияет
+      ctx.save(); ctx.globalAlpha = 0.45 + Math.sin(t * 5) * 0.2;
+      ell(ctx, sx, sy, 44, 44); ctx.fillStyle = rg(ctx, sx, sy, 44, 'rgba(255,230,120,1)', 'rgba(255,230,120,0)', 0, 0); ctx.fill();
+      ctx.restore();
+    }
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 2.5) * 0.3);
     Art.roundStar(ctx, 0, 0, 26, DC.star, DC.line);
     ctx.fillStyle = 'rgba(255,255,255,0.7)'; ell(ctx, -6, -7, 6, 4); ctx.fill();
     ctx.restore();
 
     // крылья
-    const wingScale = lvl >= 2 ? 1.35 + (lvl - 2) * 0.12 : 0.8;
+    const wingScale = lvl >= 2 ? 1.3 + Math.min(lvl - 2, 6) * 0.06 : 0.8;
     const flap = o.flap != null ? o.flap : Math.sin(t * (o.flying ? 14 : 1.8)) * (o.flying ? 0.5 : 0.08);
     for (const side of [-1, 1]) {
       ctx.save();
@@ -215,6 +220,12 @@ const Art = {};
     }
     ctx.restore();
 
+    if (lvl >= 10) { // Звёздный дракон: звёздочки кружат над головой
+      for (let i = 0; i < 5; i++) {
+        const a = t * 1.2 + i * TAU / 5;
+        Art.roundStar(ctx, Math.cos(a) * 80, -232 + Math.sin(a) * 16, 11, '#ffd23f', DC.line);
+      }
+    }
     // волшебный огонь (уровень 4+)
     if (o.fire > 0) {
       const f = o.fire;
@@ -340,8 +351,9 @@ const Art = {};
 
   // ---------- ВКУСНЯШКИ ----------
   // 0 капкейк, 1 печенька, 2 конфета, 3 пончик, 4 звёздный леденец
-  Art.TREAT_COLORS = ['#ff7eb6', '#e2a35c', '#4fb7ff', '#b07cff', '#ffd23f'];
+  Art.TREAT_COLORS = ['#ff7eb6', '#e2a35c', '#4fb7ff', '#b07cff', '#ffd23f', '#e8233f'];
   Art.treat = function (ctx, type, x, y, s, t) {
+    if (type === 5) return Art.strawberry(ctx, x, y, s);
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     const L = '#3a1f4a';
@@ -397,6 +409,40 @@ const Art = {};
         break;
       }
     }
+    ctx.restore();
+  };
+
+  // клубничка (6-й вид вкусняшек)
+  Art.strawberry = function (ctx, x, y, s) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.beginPath(); ctx.moveTo(0, 34); ctx.bezierCurveTo(-40, 10, -34, -26, 0, -20); ctx.bezierCurveTo(34, -26, 40, 10, 0, 34); ctx.closePath();
+    ctx.fillStyle = rg(ctx, 0, 0, 40, '#ff8fa0', '#e8233f'); ctx.fill(); outline(ctx, 4, '#3a1f4a');
+    for (const [sx, sy] of [[-12, -6], [8, -8], [-2, 6], [14, 6], [-14, 10], [2, 20]]) ell(ctx, sx, sy, 2.5, 3.5, '#fff3a0');
+    for (let i = -2; i <= 2; i++) { ctx.save(); ctx.translate(i * 7, -22); ctx.rotate(i * 0.5); ell(ctx, 0, -6, 5, 10, '#41d982'); outline(ctx, 2.5, '#3a1f4a'); ctx.restore(); }
+    ctx.restore();
+  };
+
+  // Космо-зайчик (житель планеты для игры «Космо-зайчики»). x,y — низ.
+  Art.bunny = function (ctx, x, y, s, t, mood) {
+    const L = '#3a1f4a';
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    const wob = Math.sin((t || 0) * 6) * 0.08;
+    for (const side of [-1, 1]) { // ушки со звёздочками
+      ctx.save(); ctx.translate(side * 24, -110); ctx.rotate(side * (0.25 + wob));
+      ell(ctx, 0, -36, 15, 40, '#e9fff8'); outline(ctx, 5, L); ell(ctx, 0, -34, 7, 28, '#ffb3d0');
+      Art.roundStar(ctx, 0, -84, 11, '#ffd23f', L);
+      ctx.restore();
+    }
+    ell(ctx, 0, -60, 62, 60); ctx.fillStyle = rg(ctx, 0, -60, 70, '#ffffff', '#bff5e6'); ctx.fill(); outline(ctx, 6, L);
+    ctx.save(); ctx.globalAlpha = 0.6; ell(ctx, -36, -48, 11, 7, '#ff8fbf'); ell(ctx, 36, -48, 11, 7, '#ff8fbf'); ctx.restore();
+    if (mood === 1) { // поймали — довольные глазки
+      for (const side of [-1, 1]) { ctx.beginPath(); ctx.arc(side * 20, -66, 10, Math.PI * 1.1, Math.PI * 1.9); outline(ctx, 5, L); }
+    } else {
+      for (const side of [-1, 1]) { ell(ctx, side * 20, -68, 11, 14, '#1d1240'); ell(ctx, side * 20 - 4, -73, 4, 5, '#fff'); }
+    }
+    ell(ctx, 0, -50, 5, 4, '#ff6f91');
+    ctx.beginPath(); ctx.moveTo(-8, -42); ctx.quadraticCurveTo(0, -34, 8, -42); outline(ctx, 3, L);
     ctx.restore();
   };
 
@@ -605,6 +651,60 @@ const Art = {};
         ctx.save(); ctx.rotate(0.2); Art.rr(ctx, -2, -20, 32, 44, 7); ctx.fillStyle = '#fff'; ctx.fill(); outline(ctx, 4, L);
         Art.heart(ctx, 14, 4, 20, '#ff5e9a'); ctx.restore();
         break;
+      case 'wing':
+        ctx.beginPath(); ctx.moveTo(-24, 18); ctx.quadraticCurveTo(-10, -30, 30, -26); ctx.quadraticCurveTo(20, -12, 26, -2);
+        ctx.quadraticCurveTo(12, -2, 12, 10); ctx.quadraticCurveTo(0, 4, -6, 18); ctx.closePath();
+        ctx.fillStyle = '#5a5a6c'; ctx.fill(); outline(ctx, 4, L);
+        ell(ctx, 6, -12, 4, 3, '#a9aab8'); ell(ctx, 16, -4, 3, 3, '#a9aab8'); break;
+      case 'glow':
+        ctx.save(); ctx.globalAlpha = 0.5; ell(ctx, 0, 0, 30, 30, '#fff3a0'); ctx.restore();
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 18, Math.sin(a) * 18); ctx.lineTo(Math.cos(a) * 28, Math.sin(a) * 28); ctx.lineWidth = 5; ctx.strokeStyle = '#ffd23f'; ctx.stroke(); }
+        ell(ctx, 0, 0, 14, 14, '#ffd23f'); outline(ctx, 3, L); break;
+      case 'paw':
+        ell(ctx, 0, 8, 16, 13, '#24232e'); outline(ctx, 3, L);
+        for (const [px, py] of [[-16, -10], [-5, -18], [7, -18], [17, -10]]) { ell(ctx, px, py, 6, 7, '#24232e'); outline(ctx, 3, L); }
+        ell(ctx, 0, 9, 8, 6, '#ffd6b0');
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; for (const lx of [-28, 26]) { ctx.beginPath(); ctx.moveTo(lx, -4); ctx.lineTo(lx + (lx < 0 ? -6 : 6), -4); ctx.moveTo(lx, 6); ctx.lineTo(lx + (lx < 0 ? -8 : 8), 6); ctx.stroke(); }
+        break;
+      case 'magnet':
+        ctx.beginPath(); ctx.arc(0, -2, 20, Math.PI, 0); ctx.lineWidth = 14; ctx.strokeStyle = '#ff3b5c'; ctx.stroke();
+        ctx.fillStyle = '#ff3b5c'; ctx.fillRect(-27, -2, 14, 16); ctx.fillRect(13, -2, 14, 16);
+        ctx.fillStyle = '#e3e6f3'; ctx.fillRect(-27, 14, 14, 10); ctx.fillRect(13, 14, 14, 10);
+        Art.roundStar(ctx, 0, 20, 7, '#ffd23f'); break;
+      case 'eye':
+        ctx.beginPath(); ctx.moveTo(-30, 0); ctx.quadraticCurveTo(0, -30, 30, 0); ctx.quadraticCurveTo(0, 30, -30, 0); ctx.closePath();
+        ctx.fillStyle = '#fff'; ctx.fill(); outline(ctx, 4, L);
+        ell(ctx, 0, 0, 12, 12, '#6a4cff'); ell(ctx, 0, 0, 6, 6, '#120a2e'); ell(ctx, -4, -4, 3, 3, '#fff'); break;
+      case 'shield':
+        for (const [dx, sc] of [[-8, 0.85], [8, 1]]) {
+          ctx.save(); ctx.translate(dx, 0); ctx.scale(sc, sc);
+          ctx.beginPath(); ctx.moveTo(0, -26); ctx.quadraticCurveTo(14, -18, 22, -18); ctx.quadraticCurveTo(22, 14, 0, 28); ctx.quadraticCurveTo(-22, 14, -22, -18); ctx.quadraticCurveTo(-14, -18, 0, -26); ctx.closePath();
+          ctx.fillStyle = dx < 0 ? '#38d6c3' : '#7ee8ff'; ctx.fill(); outline(ctx, 4, L); ctx.restore();
+        }
+        Art.roundStar(ctx, 8, 0, 9, '#fff'); break;
+      case 'bigfire':
+        Art.icon(ctx, 'fire', -12, 4, 0.75); Art.icon(ctx, 'fire', 12, -2, 0.85); break;
+      case 'star':
+        Art.roundStar(ctx, 0, 2, 28, '#ffd23f', L); ell(ctx, -7, -6, 6, 4, 'rgba(255,255,255,0.7)'); break;
+      case 'skills':
+        ctx.beginPath(); ctx.moveTo(-14, -6); ctx.lineTo(-20, 28); ctx.lineTo(-8, 22); ctx.lineTo(0, 30); ctx.lineTo(4, 4); ctx.closePath(); ctx.fillStyle = '#ff7eb6'; ctx.fill(); outline(ctx, 3, L);
+        ctx.beginPath(); ctx.moveTo(14, -6); ctx.lineTo(20, 28); ctx.lineTo(8, 22); ctx.lineTo(0, 30); ctx.lineTo(-4, 4); ctx.closePath(); ctx.fillStyle = '#7ee8ff'; ctx.fill(); outline(ctx, 3, L);
+        ell(ctx, 0, -8, 20, 20, '#ffd23f'); outline(ctx, 4, L); Art.roundStar(ctx, 0, -8, 11, '#fff3a0'); break;
+      case 'lock':
+        Art.rr(ctx, -18, -4, 36, 28, 6); ctx.fillStyle = '#9a9bab'; ctx.fill(); outline(ctx, 4, L);
+        ctx.beginPath(); ctx.arc(0, -4, 12, Math.PI, 0); ctx.lineWidth = 6; ctx.strokeStyle = L; ctx.stroke();
+        ell(ctx, 0, 9, 4, 5, L); break;
+      case 'crystals':
+        Art.crystal(ctx, -12, 26, 0.36, '#ff9be0'); Art.crystal(ctx, 14, 26, 0.3, '#7ee8ff');
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('♪', 18, -16); break;
+      case 'constellation': {
+        const pts = [[-24, 14], [-10, -12], [8, -2], [24, -22], [16, 20]];
+        ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+        ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+        for (const p of pts) Art.roundStar(ctx, p[0], p[1], 8, '#ffd23f', L);
+        break;
+      }
+      case 'bunny': Art.bunny(ctx, 0, 26, 0.42, t, 0); break;
       case 'hint':
         ell(ctx, 0, -6, 18, 18, '#fff3a0'); outline(ctx, 4, L); Art.rr(ctx, -8, 12, 16, 12, 3); ctx.fillStyle = '#c6b6ff'; ctx.fill(); outline(ctx, 3, L); break;
     }
