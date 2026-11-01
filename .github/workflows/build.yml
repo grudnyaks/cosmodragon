@@ -1,0 +1,76 @@
+name: Сборка APK и обновления
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      WEB_VERSION: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Версии
+        shell: bash
+        run: |
+          APK_VERSION=$(grep -E '^apkVersion=' android/version.properties | cut -d= -f2 | tr -d '[:space:]')
+          MIN_APK=$(grep -E '^minApk=' android/version.properties | cut -d= -f2 | tr -d '[:space:]')
+          echo "APK_VERSION=$APK_VERSION" >> "$GITHUB_ENV"
+          echo "MIN_APK=$MIN_APK" >> "$GITHUB_ENV"
+
+      - name: Сборка APK
+        shell: bash
+        working-directory: android
+        run: |
+          set -o pipefail
+          gradle assembleRelease -PwebVersion=$WEB_VERSION --no-daemon --stacktrace 2>&1 | tee ../build.log
+
+      - name: Пакет обновления игры (web.zip) и version.json
+        shell: bash
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/cosmodragon.apk
+          REPO_URL="https://github.com/${{ github.repository }}/releases/latest/download"
+          printf '{"web":%s,"apk":%s,"minApk":%s,"apkUrl":"%s/cosmodragon.apk"}\n' "$WEB_VERSION" "$APK_VERSION" "$MIN_APK" "$REPO_URL" > out/version.json
+          cp -r web out/web
+          cp out/version.json out/web/version.json
+          (cd out/web && zip -qr ../web.zip .)
+          cat out/version.json
+          ls -la out
+
+      - name: Релиз
+        shell: bash
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          gh release create "build-$WEB_VERSION" out/cosmodragon.apk out/web.zip out/version.json \
+            --title "Космодракон, сборка $WEB_VERSION" \
+            --notes "Игра: версия $WEB_VERSION. APK: версия $APK_VERSION. Изменения: $MSG" \
+            --latest
+
+      - name: Лог ошибки сборки
+        if: failure()
+        shell: bash
+        run: |
+          [ -f build.log ] || echo "build.log отсутствует" > build.log
+          gh release create "failed-$WEB_VERSION" build.log --prerelease \
+            --title "Сборка $WEB_VERSION упала" --notes "Лог сборки во вложении" || true

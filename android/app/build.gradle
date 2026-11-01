@@ -1,0 +1,72 @@
+plugins {
+    id 'com.android.application'
+}
+
+def vprops = new Properties()
+file('../version.properties').withInputStream { vprops.load(it) }
+def apkVersion = vprops['apkVersion'].toString().trim().toInteger()
+def minApk = vprops['minApk'].toString().trim().toInteger()
+def webVersion = (project.findProperty('webVersion') ?: '0').toString()
+def webOut = layout.buildDirectory.dir('generated/webassets').get().asFile
+
+android {
+    namespace 'ru.grudnyaks.cosmodragon'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'ru.grudnyaks.cosmodragon'
+        minSdk 24
+        targetSdk 34
+        versionCode apkVersion
+        versionName "1.${apkVersion}.${webVersion}"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../keystore/cosmodragon.jks')
+            storePassword 'cosmodragon'
+            keyAlias 'cosmodragon'
+            keyPassword 'cosmodragon'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    sourceSets {
+        main {
+            assets.srcDir(webOut)
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+// Кладём игру из папки web/ внутрь APK (как резервную копию на случай отсутствия интернета)
+tasks.register('copyWeb', Copy) {
+    from("${rootDir}/../web")
+    into(new File(webOut, 'web'))
+    doLast {
+        new File(webOut, 'web/version.json').text = "{\"web\":${webVersion},\"apk\":${apkVersion},\"minApk\":${minApk}}"
+    }
+}
+preBuild.dependsOn('copyWeb')
