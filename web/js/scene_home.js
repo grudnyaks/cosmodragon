@@ -17,7 +17,7 @@ G.scenes.home = {
       { icon: 'memory', color: '#ff9a3c', scene: 'memory' },
     ];
     this.gameBtns = games.map((g, i) => UI.add(this, { x: 300 + i * 136, y: by, r: 54, icon: g.icon, color: g.color, bob: true, iconScale: 1.05, onTap: () => { Voice.stop(); G.go(g.scene); } }));
-    this.feedBtn = UI.add(this, { x: 890, y: 420, r: 58, icon: 'feed', color: '#ffd23f', onTap: () => this.feed() });
+    this.feedBtn = UI.add(this, { x: 950, y: 400, r: 58, icon: 'feed', color: '#ffd23f', onTap: () => this.feed() });
     UI.add(this, { x: G.view.x0 + 60, y: 60, r: 38, icon: d.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
     UI.add(this, { x: G.view.x0 + 150, y: 60, r: 38, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
     this.updBtn = UI.add(this, { x: G.view.x0 + 240, y: 60, r: 38, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });

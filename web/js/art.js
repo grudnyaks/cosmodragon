@@ -49,12 +49,19 @@ const Art = {};
   // детерминированный ГСЧ
   Art.seeded = function (seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; };
 
+  function spots(ctx, list) {
+    for (const [x, y, rx, ry] of list) {
+      ell(ctx, x, y, rx, ry, DC.spot);
+      ell(ctx, x - rx * 0.25, y - ry * 0.3, rx * 0.45, ry * 0.4, DC.spotLight);
+    }
+  }
   // ---------- ДРАКОНЧИК (оригинальный персонаж) ----------
   // x,y — точка между лапками на земле. o: {t, level, blink, mouth, look, squash, flap, fire, happy}
   const DC = {
-    body: '#8f6cf2', bodyDark: '#5f3fc4', belly: '#ffd6b0', bellyLine: '#f2b48a',
-    horn: '#fff1c9', crest: '#38d6c3', crestDark: '#1fa596', wing: '#4fe0cf', wingDark: '#24a99a',
-    eyeIris: '#3a2a8a', cheek: '#ff8fbf', line: '#3a1f7a', star: '#ffd23f',
+    body: '#24232e', bodyHi: '#4a4958', muzzle: '#3a3947', spot: '#8d8e9e', spotLight: '#a9aab8',
+    belly: '#ffd6b0', bellyLine: '#f2b48a',
+    horn: '#fff1c9', crest: '#9a9bab', crestDark: '#6d6e7e', wing: '#5a5a6c', wingDark: '#8d8e9e',
+    eyeIris: '#6a4cff', cheek: '#ff8fbf', line: '#0f0d18', star: '#ffd23f',
   };
   Art.dragonColors = DC;
   Art.dragon = function (ctx, x, y, s, o) {
@@ -86,6 +93,7 @@ const Art = {};
     ctx.quadraticCurveTo(120, -20 + sway * 0.3, 135 + sway * 0.4, -70 + sway);
     ctx.lineWidth = 34; ctx.strokeStyle = DC.line; ctx.stroke();
     ctx.lineWidth = 26; ctx.strokeStyle = DC.body; ctx.stroke();
+    spots(ctx, [[70, -34 + sway * 0.1, 7, 5], [104, -40 + sway * 0.3, 6, 5], [126 + sway * 0.3, -58 + sway * 0.7, 5, 4]]);
     // шипики на хвосте
     for (let i = 0; i < 2; i++) {
       const px = 85 + i * 28, py = -38 + sway * 0.25 * i - i * 10;
@@ -117,16 +125,22 @@ const Art = {};
       ctx.fillStyle = DC.wing; ctx.fill(); outline(ctx, 5, DC.line);
       ctx.beginPath(); ctx.moveTo(4, 4); ctx.lineTo(88, -20); ctx.moveTo(4, 8); ctx.lineTo(64, 0);
       ctx.lineWidth = 3; ctx.strokeStyle = DC.wingDark; ctx.stroke();
+      spots(ctx, [[30, -24, 6, 5], [58, -36, 5, 4], [72, -8, 4, 4]]);
       ctx.restore();
     }
 
     // лапки
     for (const side of [-1, 1]) {
       ell(ctx, side * 38, -14, 30, 20, DC.body); outline(ctx, 5, DC.line);
+      spots(ctx, [[side * 48, -22, 6, 4]]);
       for (let k = -1; k <= 1; k++) ell(ctx, side * 38 + k * 11, -5, 5.5, 5, DC.horn);
     }
     // тело
-    ell(ctx, 0, -72, 72, 68); ctx.fillStyle = rg(ctx, 0, -72, 90, '#a88bff', DC.body); ctx.fill(); outline(ctx, 6, DC.line);
+    ell(ctx, 0, -72, 72, 68); ctx.fillStyle = rg(ctx, 0, -72, 90, DC.bodyHi, DC.body); ctx.fill();
+    ctx.save(); ctx.clip();
+    spots(ctx, [[-58, -100, 11, 8], [-62, -62, 8, 6], [-50, -30, 10, 7], [58, -96, 9, 7], [62, -56, 12, 8], [50, -26, 7, 5]]);
+    ctx.restore();
+    ell(ctx, 0, -72, 72, 68); outline(ctx, 6, DC.line);
     // животик
     ell(ctx, 0, -62, 46, 50, DC.belly);
     ctx.lineWidth = 3; ctx.strokeStyle = DC.bellyLine;
@@ -162,9 +176,13 @@ const Art = {};
       ell(ctx, side * 62, -6, 16, 11, DC.crest, side * 0.4); outline(ctx, 4, DC.line);
     }
     // голова-шарик
-    ell(ctx, 0, 0, 66, 60); ctx.fillStyle = rg(ctx, 0, 0, 80, '#ae94ff', DC.body); ctx.fill(); outline(ctx, 6, DC.line);
+    ell(ctx, 0, 0, 66, 60); ctx.fillStyle = rg(ctx, 0, 0, 80, DC.bodyHi, DC.body); ctx.fill();
+    ctx.save(); ctx.clip();
+    spots(ctx, [[-20, -46, 10, 7], [6, -52, 7, 5], [30, -40, 12, 8], [-54, -18, 7, 9], [56, -10, 8, 10], [-44, 40, 6, 5]]);
+    ctx.restore();
+    ell(ctx, 0, 0, 66, 60); outline(ctx, 6, DC.line);
     // мордочка
-    ell(ctx, 0, 26, 40, 26, '#b79dff');
+    ell(ctx, 0, 26, 40, 26, DC.muzzle);
     // щёчки
     ctx.save(); ctx.globalAlpha = 0.65; ell(ctx, -42, 20, 13, 8, DC.cheek); ell(ctx, 42, 20, 13, 8, DC.cheek); ctx.restore();
     // глаза
