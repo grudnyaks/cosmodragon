@@ -150,6 +150,7 @@ G.scenes.home = {
   },
   drawTop(ctx) {
     UI.drawCounterTopRight(ctx);
+    ctx.save(); ctx.globalAlpha = 0.45; UI.text(ctx, 'версия ' + G.webVersion, G.view.x1 - 20, G.view.y1 - 18, 18, '#fff', 'right', false); ctx.restore();
     const b = this.banner;
     if (b) {
       const k = Math.min(1, (G.t - b.t0) / 0.5), sc = G.ease.outBack(k);
