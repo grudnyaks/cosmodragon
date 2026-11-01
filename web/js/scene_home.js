@@ -13,8 +13,10 @@ G.scenes.home = {
       { icon: 'puzzle', color: '#3fb8ff', scene: 'puzzle' },
       { icon: 'match', color: '#ff7eb6', scene: 'match3' },
       { icon: 'route', color: '#8f6cf2', scene: 'route' },
+      { icon: 'catch', color: '#41d982', scene: 'catch' },
+      { icon: 'memory', color: '#ff9a3c', scene: 'memory' },
     ];
-    this.gameBtns = games.map((g, i) => UI.add(this, { x: 380 + i * 170, y: by, r: 56, icon: g.icon, color: g.color, bob: true, iconScale: 1.05, onTap: () => { Voice.stop(); G.go(g.scene); } }));
+    this.gameBtns = games.map((g, i) => UI.add(this, { x: 300 + i * 136, y: by, r: 54, icon: g.icon, color: g.color, bob: true, iconScale: 1.05, onTap: () => { Voice.stop(); G.go(g.scene); } }));
     this.feedBtn = UI.add(this, { x: 890, y: 420, r: 58, icon: 'feed', color: '#ffd23f', onTap: () => this.feed() });
     UI.add(this, { x: G.view.x0 + 60, y: 60, r: 38, icon: d.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
     UI.add(this, { x: G.view.x0 + 150, y: 60, r: 38, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });

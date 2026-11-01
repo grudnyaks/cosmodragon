@@ -575,6 +575,18 @@ const Art = {};
         ctx.beginPath(); ctx.moveTo(0, 28); ctx.bezierCurveTo(-30, 20, -24, -10, -8, -28); ctx.quadraticCurveTo(-6, -10, 4, -6); ctx.quadraticCurveTo(6, -22, 14, -26); ctx.bezierCurveTo(30, -4, 26, 22, 0, 28);
         ctx.fillStyle = '#ff9a3c'; ctx.fill(); outline(ctx, 4, L);
         ell(ctx, 0, 14, 9, 11, '#fff3a0'); break;
+      case 'catch':
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+        for (const lx of [-14, 0, 14]) { ctx.beginPath(); ctx.moveTo(lx, -34); ctx.lineTo(lx, -20); ctx.stroke(); }
+        Art.treat(ctx, 4, 0, -2, 0.42, t);
+        ctx.beginPath(); ctx.moveTo(-26, 16); ctx.quadraticCurveTo(0, 40, 26, 16); ctx.lineWidth = 7; ctx.strokeStyle = '#3a1f4a'; ctx.stroke();
+        break;
+      case 'memory':
+        ctx.save(); ctx.rotate(-0.2); Art.rr(ctx, -30, -24, 32, 44, 7); ctx.fillStyle = '#8f6cf2'; ctx.fill(); outline(ctx, 4, L);
+        Art.roundStar(ctx, -14, -2, 9, '#ffd23f'); ctx.restore();
+        ctx.save(); ctx.rotate(0.2); Art.rr(ctx, -2, -20, 32, 44, 7); ctx.fillStyle = '#fff'; ctx.fill(); outline(ctx, 4, L);
+        Art.heart(ctx, 14, 4, 20, '#ff5e9a'); ctx.restore();
+        break;
       case 'hint':
         ell(ctx, 0, -6, 18, 18, '#fff3a0'); outline(ctx, 4, L); Art.rr(ctx, -8, 12, 16, 12, 3); ctx.fillStyle = '#c6b6ff'; ctx.fill(); outline(ctx, 3, L); break;
     }

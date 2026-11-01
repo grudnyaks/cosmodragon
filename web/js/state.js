@@ -5,7 +5,7 @@ const S = {
   data: null,
   defaults: {
     treats: 5, level: 1, fed: 0, name: 'Дракоша', introSeen: false,
-    puzzle: 0, route: 0, match: 0, treasure: 0, music: true, voice: true, beacon: false,
+    puzzle: 0, route: 0, match: 0, treasure: 0, catch: 0, memory: 0, music: true, voice: true, beacon: false,
   },
   load() {
     let d = {};

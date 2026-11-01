@@ -24,8 +24,29 @@ const Sound = (function () {
     for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } // коричневый шум
   }
 
+  // Записанное урчание (sounds/purr1..4.mp3); пока не загрузилось — синтезированное
+  const purrBufs = [];
+  let purrLoading = false, lastPurr = -1, purrUntil = 0;
+  function loadPurrs() {
+    if (purrLoading || !ac) return; purrLoading = true;
+    for (let i = 1; i <= 4; i++) {
+      fetch('sounds/purr' + i + '.mp3').then(r => r.arrayBuffer())
+        .then(b => new Promise((ok, bad) => ac.decodeAudioData(b, ok, bad)))
+        .then(buf => purrBufs.push(buf)).catch(() => { });
+    }
+  }
+  function playPurrSample(t, rate) {
+    let i; do { i = (Math.random() * purrBufs.length) | 0; } while (purrBufs.length > 1 && i === lastPurr);
+    lastPurr = i;
+    const src = ac.createBufferSource(); src.buffer = purrBufs[i]; src.playbackRate.value = rate;
+    const g = ac.createGain(); g.gain.value = 1.0;
+    src.connect(g); g.connect(sfxGain); src.start(t);
+    return purrBufs[i].duration / rate;
+  }
+
   function unlock() {
     init(); if (!ac) return;
+    loadPurrs();
     if (ac.state === 'suspended') ac.resume();
     if (S.data.music && !musicOn) startMusic();
   }
@@ -110,8 +131,22 @@ const Sound = (function () {
     get musicOn() { return musicOn; },
     pause() { if (ac && ac.state === 'running') ac.suspend(); Voice.stop(); },
     resume() { if (ac && ac.state === 'suspended') ac.resume(); },
-    // Урчание дракончика: низкий шум с пульсацией ~24 Гц
+    // Урчание дракончика: записанные «мур-р», чем больше дракончик — тем ниже голос
     purr(len) {
+      if (!ok()) return;
+      if (purrBufs.length) {
+        const now = ac.currentTime;
+        if (now < purrUntil - 0.3) return; // не накладываем урчание на урчание
+        const lvl = (S.data && S.data.level) || 1, rate = 1.1 - (lvl - 1) * 0.06;
+        let t = now, total = len || 1.6;
+        do { t += playPurrSample(t, rate * (0.97 + Math.random() * 0.06)) - 0.05; } while (t - now < total * 0.8);
+        purrUntil = t;
+        return;
+      }
+      this.purrSynth(len);
+    },
+    // Запасной синтезированный вариант: низкий шум с пульсацией ~24 Гц
+    purrSynth(len) {
       if (!ok()) return; const t = ac.currentTime, dur = len || 1.6;
       const src = ac.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
       const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260; lp.Q.value = 4;
