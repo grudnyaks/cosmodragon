@@ -153,7 +153,7 @@ G.scenes.home = {
       UI.progress(ctx, cx + 20, 76, 190, 32, d.fed / LEVELS[d.level].need, '#ff7eb6');
       UI.text(ctx, d.fed + '/' + LEVELS[d.level].need, cx + 115, 93, 20, '#fff', 'center', true);
       Art.treat(ctx, 0, cx + 205, 88, 0.45);
-    } else UI.text(ctx, d.beacon ? 'Маяк сияет!' : 'Звёздный дракон!', cx + 115, 92, 24, '#ffd23f', 'center', true);
+    } else UI.text(ctx, d.beacon ? 'Маяк сияет!' : 'Звёздный дракон!', cx + 118, 92, 19, '#ffd23f', 'center', true);
   },
   drawTop(ctx) {
     UI.drawCounterTopRight(ctx);
