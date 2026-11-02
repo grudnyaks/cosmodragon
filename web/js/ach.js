@@ -24,6 +24,8 @@ const ACH = (function () {
     { id: 'puzzle10', title: 'Мастер пазлов', desc: 'Собери 10 пазлов', icon: 'puzzle', goal: 10, val: () => sumGames('puzzle') },
     { id: 'count10', title: 'Умею считать', desc: 'Выиграй 10 игр со счётом', icon: 'pop', goal: 10, val: () => sumGames('pop') + sumGames('stars') },
     { id: 'music10', title: 'Музыкант', desc: 'Спой 10 мелодий', icon: 'crystals', goal: 10, val: () => sumGames('simon') },
+    { id: 'moved', title: 'Большая семья', desc: 'Перевези дракона на Ням-Ням', icon: 'gather', ok: () => st('moved') >= 1 },
+    { id: 'strike', title: 'Страйк!', desc: 'Сбей все кегли одним броском', icon: 'bowling', ok: () => st('strike') >= 1 },
     { id: 'planets', title: 'Путешественник', desc: 'Открой все планеты', icon: 'galaxy', goal: 7, val: () => S.data.unlocked.length },
   ];
   for (const p of PLANETS) list.push({ id: 'beacon_' + p.id, title: 'Маяк ' + p.of.replace('планеты ', ''), desc: 'Зажги маяк ' + p.of, icon: 'star', planet: p.id, ok: () => S.data.planets[p.id].beacon });

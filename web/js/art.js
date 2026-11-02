@@ -718,6 +718,35 @@ const Art = {};
       case 'sort':
         ctx.beginPath(); ctx.moveTo(-28, -2); ctx.lineTo(28, -2); ctx.lineTo(20, 28); ctx.lineTo(-20, 28); ctx.closePath(); ctx.fillStyle = '#c8a070'; ctx.fill(); outline(ctx, 4, L);
         ell(ctx, -10, -14, 9, 9, '#ff4a6a'); outline(ctx, 3, L); ell(ctx, 10, -18, 9, 9, '#3a8aff'); outline(ctx, 3, L); break;
+      case 'move':
+        Art.rocket(ctx, -6, 30, 0.13, { t: t || 0 }); Art.heart(ctx, 16, -8, 22, '#ff5e9a'); break;
+      case 'gather':
+        for (const [hx, hy, c] of [[-16, 6, '#2f9fe0'], [0, -10, '#e8432a'], [16, 6, '#4cc85a']]) { ell(ctx, hx, hy, 12, 12, c); outline(ctx, 3, L); ell(ctx, hx - 4, hy - 2, 2.5, 3, L); ell(ctx, hx + 4, hy - 2, 2.5, 3, L); }
+        Art.heart(ctx, 0, 22, 16, '#ff5e9a'); break;
+      case 'bowling':
+        ell(ctx, -14, 10, 16, 16, '#8f6cf2'); outline(ctx, 3, L); ell(ctx, -18, 4, 2.5, 2.5, L); ell(ctx, -11, 4, 2.5, 2.5, L); ell(ctx, -14, 11, 2.5, 2.5, L);
+        for (const px of [10, 22]) { ctx.beginPath(); ctx.moveTo(px, -24); ctx.quadraticCurveTo(px + 8, -14, px + 4, -4); ctx.quadraticCurveTo(px + 9, 10, px + 5, 24); ctx.lineTo(px - 5, 24); ctx.quadraticCurveTo(px - 9, 10, px - 4, -4); ctx.quadraticCurveTo(px - 8, -14, px, -24); ctx.fillStyle = '#fff'; ctx.fill(); outline(ctx, 2.5, L); ctx.fillStyle = '#ff3b5c'; ctx.fillRect(px - 5, -8, 10, 4); }
+        break;
+      case 'fishing':
+        ctx.beginPath(); ctx.moveTo(-26, 26); ctx.lineTo(18, -26); outline(ctx, 4, '#8a5a2a'); ctx.beginPath(); ctx.moveTo(18, -26); ctx.lineTo(18, 6); outline(ctx, 2, L);
+        ctx.beginPath(); ctx.arc(14, 10, 5, 0, Math.PI); outline(ctx, 2.5, L); Art.treatNamed && Art.treatNamed(ctx, 'fishjelly', -4, 14, 0.45); break;
+      case 'catapult':
+        ctx.beginPath(); ctx.moveTo(-26, 24); ctx.lineTo(26, 24); outline(ctx, 5, '#8a5a2a'); ctx.beginPath(); ctx.moveTo(-10, 24); ctx.lineTo(14, -16); outline(ctx, 5, '#8a5a2a');
+        ell(ctx, 16, -20, 9, 9, '#ff7a1a'); outline(ctx, 2.5, L); ell(ctx, 16, -20, 4, 4, '#fff27a'); break;
+      case 'tower':
+        for (let i = 0; i < 4; i++) { Art.rr(ctx, -18 + (i % 2) * 6 - 3, 16 - i * 13, 36, 12, 4); ctx.fillStyle = ['#ff7eb6', '#7ee8ff', '#ffd23f', '#41d982'][i]; ctx.fill(); outline(ctx, 2.5, L); }
+        ctx.beginPath(); ctx.moveTo(0, -36); ctx.lineTo(0, -28); outline(ctx, 2, L); break;
+      case 'iceslide':
+        Art.rr(ctx, -28, -28, 56, 56, 8); ctx.fillStyle = '#d6f4ff'; ctx.fill(); outline(ctx, 3, L);
+        ctx.fillStyle = '#7fbfe8'; ctx.fillRect(-8, -28, 16, 16); ctx.fillRect(12, 8, 16, 16);
+        ell(ctx, -16, 16, 8, 8, '#2f9fe0'); outline(ctx, 2, L); Art.roundStar(ctx, 18, -14, 8, '#ffd23f');
+        ctx.beginPath(); ctx.moveTo(-6, 16); ctx.lineTo(8, 16); outline(ctx, 2.5, '#fff'); break;
+      case 'pixel':
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { ctx.fillStyle = ['#ff5e9a', '#ffd23f', '#41d982', '#4fb7ff'][(i + j) % 4]; ctx.fillRect(-24 + i * 12, -24 + j * 12, 11, 11); }
+        Art.rr(ctx, -26, -26, 52, 52, 4); outline(ctx, 3, L); break;
+      case 'snake':
+        ctx.beginPath(); ctx.moveTo(-24, 18); ctx.quadraticCurveTo(-24, -6, -4, -4); ctx.quadraticCurveTo(14, -2, 14, -20); outline(ctx, 12, L); ctx.beginPath(); ctx.moveTo(-24, 18); ctx.quadraticCurveTo(-24, -6, -4, -4); ctx.quadraticCurveTo(14, -2, 14, -20); outline(ctx, 8, '#41d982');
+        ell(ctx, 14, -22, 8, 8, '#41d982'); outline(ctx, 2.5, L); ell(ctx, 16, -24, 2, 2, L); Art.treatNamed && Art.treatNamed(ctx, 'banana', 18, 18, 0.32); break;
       case 'galaxy':
         ctx.save(); ctx.rotate(-0.4); ell(ctx, 0, 0, 30, 12, '#b07cff'); outline(ctx, 3, L); ctx.restore();
         ell(ctx, 0, 0, 13, 13, '#ffd23f'); outline(ctx, 3, L);

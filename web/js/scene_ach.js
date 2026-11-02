@@ -40,9 +40,9 @@ G.scenes.ach = {
     const a = this.hitCard(x, y);
     if (a) { Voice.say(a.title + '. ' + a.desc + '.'); Sound.pop(1); }
   },
-  layout(i) { const c = i % 5, r = Math.floor(i / 5); return { x: 160 + c * 240, y: 162 + r * 96 }; },
+  layout(i) { const c = i % 5, r = Math.floor(i / 5); return { x: 160 + c * 240, y: 148 + r * 84 }; },
   hitCard(x, y) {
-    for (let i = 0; i < ACH.length; i++) { const p = this.layout(i); if (Math.abs(x - p.x) < 115 && Math.abs(y - p.y) < 44) return ACH[i]; }
+    for (let i = 0; i < ACH.length; i++) { const p = this.layout(i); if (Math.abs(x - p.x) < 115 && Math.abs(y - p.y) < 38) return ACH[i]; }
     return null;
   },
   draw(ctx) {
@@ -52,10 +52,10 @@ G.scenes.ach = {
       UI.text(ctx, 'Получено: ' + Ach.count() + ' из ' + ACH.length, 1100, 64, 22, '#ffd6f0', 'center', true);
       ACH.forEach((a, i) => {
         const p = this.layout(i), got = !!S.data.ach[a.id], k = Ach.progress(a);
-        Art.rr(ctx, p.x - 115, p.y - 42, 230, 84, 20); ctx.fillStyle = got ? 'rgba(255,248,230,0.97)' : 'rgba(60,40,110,0.8)'; ctx.fill();
+        Art.rr(ctx, p.x - 115, p.y - 37, 230, 74, 18); ctx.fillStyle = got ? 'rgba(255,248,230,0.97)' : 'rgba(60,40,110,0.8)'; ctx.fill();
         ctx.lineWidth = 4; ctx.strokeStyle = got ? '#ffd23f' : '#2a1650'; ctx.stroke();
-        Art.ell(ctx, p.x - 78, p.y, 30, 30, got ? '#ffd23f' : '#4a3a70'); Art.stroke(ctx, 3);
-        ctx.save(); if (!got) ctx.globalAlpha = 0.4; Art.icon(ctx, a.icon, p.x - 78, p.y, 0.62, t); ctx.restore();
+        Art.ell(ctx, p.x - 80, p.y, 27, 27, got ? '#ffd23f' : '#4a3a70'); Art.stroke(ctx, 3);
+        ctx.save(); if (!got) ctx.globalAlpha = 0.4; Art.icon(ctx, a.icon, p.x - 80, p.y, 0.56, t); ctx.restore();
         UI.text(ctx, a.title, p.x + 30, p.y - 14, a.title.length > 14 ? 17 : 20, got ? '#5a3fa0' : '#d6c8ff', 'center', false);
         if (!got && !a.ok) { UI.progress(ctx, p.x - 38, p.y + 6, 140, 22, k, '#ff7eb6'); }
         else UI.text(ctx, got ? '★ получено' : 'ещё нет', p.x + 30, p.y + 18, 17, got ? '#ff7eb6' : '#a898d0', 'center', false);

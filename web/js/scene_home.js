@@ -16,23 +16,32 @@ G.scenes.home = {
     if (ps.beacon && nx && !S.data.unlocked.includes(nx.id)) S.data.unlocked.push(nx.id);
     S.save();
     Sound.preload(pd.id);
-    this.dr = { x: 650, y: 590, lift: 0, squash: 0, mouth: 0, happyT: 0, fire: 0, flying: false, look: 0, tilt: 0, gone: ps.serpent === 'kidnapped', flash: 0 };
+    // кто стоит впереди: свой дракон планеты; на Ням-Ням ещё и гости с других планет
+    this.moved = pd.id !== 'nyam' && ps.moved;
+    this.front = this.moved ? null : pd.id;
+    this.guests = pd.id === 'nyam' ? PLANETS.filter(p => p.id !== 'nyam' && PS(p.id).moved && PS(p.id).level >= 1).map(p => p.id) : [];
+    if (pd.id === 'nyam' && PS('nyam').level < 1 && this.guests.length) this.front = this.guests.shift();
+    this.dr = { x: 650, y: 590, lift: 0, squash: 0, mouth: 0, happyT: 0, fire: 0, flying: false, look: 0, tilt: 0, gone: ps.serpent === 'kidnapped' || this.moved, flash: 0 };
     this.as = { anim: 'idle', at: 0, until: 0, phrase: 0 };
     this.rk = { lift: 0, flame: 0, busy: false, act: 0, pilotWave: 0, lights: 0 };
     this.blinkT = 2; this.blink = 0; this.taps = 0;
     this.banner = null; this.busy = false; this.lighting = false;
     // кнопки игр
-    const games = pd.games, n = games.length, step = n > 7 ? 108 : 130, r = n > 7 ? 47 : 52;
+    const games = pd.games, n = games.length, step = n > 9 ? 98 : n > 7 ? 116 : 130, r = n > 9 ? 43 : n > 7 ? 48 : 52;
     const x0 = 640 - (n - 1) * step / 2 - 30;
     this.gameBtns = games.map((g, i) => UI.add(this, { x: x0 + i * step, y: 662, r, icon: g.icon, color: g.color, bob: true, iconScale: 1.12,
       onTap: () => { Voice.stop(); G.go(g.scene); } }));
-    this.feedBtn = UI.add(this, { x: 950, y: 400, r: 58, icon: 'feed', color: '#ffd23f', onTap: () => this.feed() });
+    this.feedBtn = UI.add(this, { x: 950, y: 400, r: 58, color: '#ffd23f', draw: (ctx) => Art.treat(ctx, 0, 0, 4, 0.75, G.t, this.front || S.data.planet), onTap: () => this.feed() });
     const tx = i => G.view.x0 + 58 + i * 84;
     UI.add(this, { x: tx(0), y: 56, r: 35, icon: S.data.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
     UI.add(this, { x: tx(1), y: 56, r: 35, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro', { planet: pd.id }); } });
     UI.add(this, { x: tx(2), y: 56, r: 35, icon: 'skills', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('skills'); } });
     UI.add(this, { x: tx(3), y: 56, r: 35, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
     this.mapBtn = UI.add(this, { x: tx(4), y: 56, r: 35, icon: 'galaxy', color: '#8f6cf2', badge: null, onTap: () => { Voice.stop(); G.go('map'); } });
+    if (pd.id === 'nyam') this.moveBtn = UI.add(this, { x: 950, y: 270, r: 42, icon: 'gather', color: '#41d982', onTap: () => this.gatherAll() });
+    else this.moveBtn = UI.add(this, { x: 950, y: 270, r: 42, icon: 'move', color: '#41d982', hidden: true, onTap: () => this.sendToNyam() });
+    this.returnBtn = UI.add(this, { x: 650, y: 430, w: 480, h: 84, label: 'Вернуть ' + pd.dragon.acc + ' домой', icon: 'move', iconX: -190, fontSize: 30, color: '#41d982', pulse: true, hidden: !this.moved,
+      onTap: () => this.returnHome() });
     this.updBtn = UI.add(this, { x: tx(5), y: 56, r: 35, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     this.flyBtn = UI.add(this, { x: 640, y: 168, w: 520, h: 84, label: 'Лететь дальше!', icon: 'galaxy', iconX: -200, fontSize: 34, color: '#8f6cf2', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('map', { reveal: (nextPlanet(P().id) || {}).id }); } });
@@ -45,19 +54,89 @@ G.scenes.home = {
     // змей (Джунгли)
     this.sp = null;
     if (pd.special === 'serpent' && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 1500);
-    if (ps.level >= MAX_LEVEL && !ps.beacon && ps.serpent !== 'kidnapped') {
+    const fs = this.front ? PS(this.front) : null;
+    if (fs && fs.level < MAX_LEVEL && fs.fed >= levelNeed(fs.level, this.front) && fs.serpent !== 'kidnapped') {
+      setTimeout(() => { if (G.scene === this && !this.busy) { Voice.say(PLANET_BY_ID[this.front].dragon.name + ' подрос, пока ты играл!'); fs.level === 0 ? this.hatch() : this.levelUp(); } }, 1200);
+    } else if (ps.level >= MAX_LEVEL && !ps.beacon && ps.serpent !== 'kidnapped' && !this.moved) {
       this.autoBeacon = setTimeout(() => this.lightBeacon(), 2500);
     } else if (!this.greeted) { this.greeted = true; setTimeout(() => this.hello(), 700); }
   },
   exit() { clearTimeout(this.autoBeacon); },
+  fps() { return PS(this.front || S.data.planet); },
+  fpd() { return PLANET_BY_ID[this.front || S.data.planet]; },
+  // ---------- перевозка драконов ----------
+  canMove(pid) { const q = PS(pid); return pid !== 'nyam' && q.level >= 1 && q.serpent !== 'kidnapped' && !q.moved; },
+  sendToNyam() {
+    const pd = P(), dr = this.dr;
+    if (this.busy) return;
+    if (!this.canMove(pd.id)) { Voice.say(PS().level < 1 ? 'Сначала дракончик должен вылупиться!' : 'Сейчас нельзя.'); return; }
+    this.busy = true; dr.flying = true; Sound.whoosh();
+    Voice.say(pd.dragon.name + ' полетел в гости на планету Ням-Ням! Там он будет жить со всеми драконами.');
+    G.tween(dr, { lift: 700, x: 400 }, 2.2, G.ease.inOutQuad, () => {
+      PS().moved = true; S.save(); stat('moved');
+      this.moved = true; this.front = null; dr.gone = true; dr.flying = false; dr.lift = 0; dr.x = 650; this.busy = false;
+      this.returnBtn.hidden = false;
+    });
+  },
+  returnHome() {
+    const pd = P(), dr = this.dr;
+    PS().moved = false; S.save();
+    this.moved = false; this.front = pd.id; dr.gone = PS().serpent === 'kidnapped';
+    this.returnBtn.hidden = true;
+    dr.lift = 700; dr.flying = true; Sound.whoosh();
+    G.tween(dr, { lift: 0 }, 2, G.ease.outQuad, () => { dr.flying = false; Sound.purr(1.4, { planet: pd.id }); G.burst(dr.x, 450, { kind: 'heart', n: 10, up: true, g: -60, speed: 160 }); });
+    Voice.say(pd.dragon.name + ' вернулся домой на планету ' + pd.name + '!');
+  },
+  gatherAll() {
+    const list = PLANETS.filter(p => this.canMove(p.id));
+    if (!list.length) {
+      const here = this.guests.length;
+      Voice.say(here ? 'Все вылупившиеся драконы уже здесь, на Ням-Ням!' : 'Пока некого перевезти. Вырасти дракончиков на других планетах!');
+      Sound.boing(); return;
+    }
+    for (const p of list) { PS(p.id).moved = true; this.guests.push(p.id); }
+    S.save(); stat('moved', list.length);
+    Sound.magic(); Sound.whoosh();
+    for (const p of list) { const i = this.backRow().indexOf(p.id); if (i < 0) continue; const pos = this.guestPos(i); G.burst(pos[0], pos[1] - 60, { kind: 'star', n: 16, speed: 220 }); }
+    Voice.say('Ура! ' + list.map(p => p.dragon.name).join(', ') + (list.length > 1 ? ' прилетели' : ' прилетел') + ' на Ням-Ням!');
+  },
+  guestPos(i) { return [[360, 520], [850, 518], [970, 526], [1065, 516], [300, 548], [790, 540], [1110, 548]][Math.max(0, i) % 7]; },
+  // кто стоит в заднем ряду (все драконы экрана, кроме переднего)
+  backRow() {
+    if (P().id !== 'nyam') return [];
+    const all = (PS('nyam').level >= 1 ? ['nyam'] : []).concat(this.guests);
+    return all.filter(id => id !== this.front);
+  },
+  pickGuest(id) {
+    if (this.busy) return;
+    this.front = id; this.dr.squash = -0.6; G.tween(this.dr, { squash: 0 }, 0.8, G.ease.outElastic);
+    Sound.purr(1.2, { planet: id }); Sound.chime(1.1);
+    G.burst(650, 450, { kind: 'star', n: 16, speed: 220 });
+    const pd = PLANET_BY_ID[id];
+    Voice.say('Привет, ' + pd.dragon.name + '!' + (PS(id).treats > 0 && PS(id).level < MAX_LEVEL ? ' Его можно покормить угощением ' + pd.of + '.' : ''));
+  },
+  // гость дорос до 10 уровня на Ням-Ням: маяк его планеты зажигается издалека
+  remoteBeacon(pid) {
+    const ps = PS(pid), pd = PLANET_BY_ID[pid];
+    if (ps.beacon) return;
+    ps.beacon = true;
+    const nx = nextPlanet(pid);
+    if (nx && !S.data.unlocked.includes(nx.id)) S.data.unlocked.push(nx.id);
+    S.save(); stat('beacons');
+    Sound.win(); Sound.magic();
+    for (let i = 0; i < 6; i++) setTimeout(() => G.burst(M.rnd(200, 1100), M.rnd(80, 350), { kind: 'star', n: 24, speed: 320 }), i * 300);
+    this.banner = { t0: G.t, title: 'Маяк ' + pd.of.replace('планеты ', '') + ' зажёгся!', sub: nx ? 'Открыта планета ' + nx.name : 'Все маяки галактики горят!', final: true, tapClose: true };
+    Voice.say(pd.dragon.name + ' зажёг маяк своей планеты издалека!' + (nx ? ' Открылась планета ' + nx.name + '!' : ''));
+  },
   hello() {
     if (G.sceneName !== 'home') return;
     const ps = PS(), pd = P();
+    if (this.moved) { Voice.say(pd.dragon.name + ' сейчас в гостях на планете Ням-Ням. Можно вернуть его домой кнопкой.'); return; }
     if (ps.serpent === 'kidnapped') { Voice.say(ps.keys >= 3 ? 'Все ключи найдены! Нажми на кнопку, чтобы спасти Листика!' : 'Листика похитил Змей! Выигрывай игры, чтобы найти ключи: ' + ps.keys + ' из трёх.'); return; }
     if (ps.level === 0) Voice.say(ps.treats > 0 ? 'Согрей яйцо! Нажми на кнопку с угощением.' : 'Поиграй в игры, чтобы найти угощение для яйца!');
     else if (ps.treats > 0 && ps.level < MAX_LEVEL) Voice.say(pd.dragon.name + ' хочет кушать! Нажми на угощение.');
   },
-  dragonScale() { return PS().level === 0 ? 1 : 0.78 + (PS().level - 1) * 0.04; },
+  dragonScale() { return this.fps().level === 0 ? 1 : 0.78 + (this.fps().level - 1) * 0.04; },
   dragonHit(x, y) {
     if (this.dr.gone) return false;
     const s = this.dragonScale(), d = this.dr;
@@ -73,6 +152,7 @@ G.scenes.home = {
       return Voice.say(ps.beacon ? 'Маяк сияет! Его луч показывает путь к новой планете.' : 'Маяк погас. Вырасти дракончика до десятого уровня, и он его зажжёт!');
     }
     if (this.dragonHit(x, y)) return this.petDragon();
+    for (const id of this.backRow()) { const [gx, gy] = this.guestPos(this.backRow().indexOf(id)); if (Math.abs(x - gx) < 60 && y < gy + 10 && y > gy - 130) return this.pickGuest(id); }
     if (Math.abs(x - 470) < 55 && y > 420 && y < 630) return this.tapAstro();
     if (Math.abs(x - 190) < 85 && y > 120 - this.rk.lift && y < 600 - this.rk.lift) return this.tapRocket();
   },
@@ -111,11 +191,11 @@ G.scenes.home = {
   },
   // ---------- дракон ----------
   petDragon() {
-    const d = this.dr, ps = PS(), lvl = ps.level;
+    const d = this.dr, ps = this.fps(), lvl = ps.level;
     if (this.busy) return;
     this.taps++; stat('pet');
-    if (lvl === 0) { Sound.purr(0.9, { gain: 0.5, rate: 0.85 }); d.squash = 0.8; G.tween(d, { squash: 0 }, 0.8, G.ease.outElastic); Voice.say(M.pick(['Тук-тук! Кто там?', 'Яйцо шевелится!', 'Скоро вылупится!'])); return; }
-    Sound.purr(1.6);
+    if (lvl === 0) { Sound.purr(0.9, { gain: 0.5, rate: 0.85, planet: this.front }); d.squash = 0.8; G.tween(d, { squash: 0 }, 0.8, G.ease.outElastic); Voice.say(M.pick(['Тук-тук! Кто там?', 'Яйцо шевелится!', 'Скоро вылупится!'])); return; }
+    Sound.purr(1.6, { planet: this.front });
     d.happyT = 1.8;
     G.burst(d.x, d.y - 230 * this.dragonScale() - d.lift, { kind: 'heart', n: 5, colors: ['#ff5e9a', '#ff9ad5', '#ffb3d0'], up: true, g: -80, speed: 160, size: 20 });
     d.squash = 0.6; G.tween(d, { squash: 0 }, 0.6, G.ease.outElastic);
@@ -127,7 +207,7 @@ G.scenes.home = {
     }
   },
   feed() {
-    const ps = PS(), dr = this.dr, pd = P();
+    const ps = this.fps(), dr = this.dr, pd = this.fpd();
     if (this.busy) return;
     if (dr.gone) { Voice.say('Листика нет дома! Его похитил Змей. Найди три ключа, чтобы его спасти!'); return; }
     if (ps.treats <= 0) {
@@ -144,14 +224,14 @@ G.scenes.home = {
     UI.flyTreat(M.ri(0, 5), this.feedBtn.x, this.feedBtn.y, mx, my, 0, () => {
       if (egg) { Sound.chime(0.9); dr.squash = 0.6; G.tween(dr, { squash: 0 }, 0.7, G.ease.outElastic); G.burst(mx, my, { kind: 'heart', n: 6, speed: 140, colors: ['#ffb3d0', '#fff3a0'] }); }
       else { Sound.chomp(); dr.mouth = 1; G.tween(dr, { mouth: 0 }, 0.5); dr.squash = 0.5; G.tween(dr, { squash: 0 }, 0.7, G.ease.outElastic); G.burst(mx, my, { kind: 'star', n: 8, speed: 180, size: 12 }); dr.happyT = 1.5; }
-      if (ps.level >= MAX_LEVEL) { Sound.purr(1.2); return; }
+      if (ps.level >= MAX_LEVEL) { Sound.purr(1.2, { planet: this.front }); return; }
       ps.fed++; S.save();
-      if (ps.fed >= levelNeed(ps.level)) setTimeout(() => egg ? this.hatch() : this.levelUp(), 600);
-      else if (!egg) setTimeout(() => Sound.purr(1.0), 400);
-    });
+      if (ps.fed >= levelNeed(ps.level, this.front)) setTimeout(() => egg ? this.hatch() : this.levelUp(), 600);
+      else if (!egg) setTimeout(() => Sound.purr(1.0, { planet: this.front }), 400);
+    }, this.front);
   },
   hatch() {
-    const ps = PS(), dr = this.dr, pd = P();
+    const ps = this.fps(), dr = this.dr, pd = this.fpd();
     this.busy = true;
     Voice.say('Ой! Яйцо трещит!');
     let k = 0;
@@ -159,7 +239,7 @@ G.scenes.home = {
     const finish = () => {
       if (G.sceneName !== 'home') { ps.level = 1; ps.fed = 0; S.save(); return; }
       dr.flash = 1; G.tween(dr, { flash: 0 }, 1.2, G.ease.outQuad);
-      ps.level = 1; ps.fed = 0; S.save(); stat('hatched');
+      ps.fed = Math.max(0, ps.fed - levelNeed(0, this.front)); ps.level = 1; S.save(); stat('hatched');
       dr.squash = -0.8; G.tween(dr, { squash: 0 }, 1.2, G.ease.outElastic);
       Sound.levelUp(); setTimeout(() => Sound.purr(1.8), 700);
       G.burst(dr.x, dr.y - 100, { kind: 'star', n: 40, speed: 380 });
@@ -171,22 +251,26 @@ G.scenes.home = {
     };
   },
   levelUp() {
-    const ps = PS(), pd = P();
-    ps.level = Math.min(MAX_LEVEL, ps.level + 1); ps.fed = 0; S.save(); stat('lvl');
+    const ps = this.fps(), pd = this.fpd();
+    const need = levelNeed(ps.level, this.front);
+    ps.level = Math.min(MAX_LEVEL, ps.level + 1); ps.fed = Math.max(0, ps.fed - need); S.save(); stat('lvl');
     Sound.levelUp();
     const dr = this.dr;
     dr.squash = -0.8; G.tween(dr, { squash: 0 }, 1.2, G.ease.outElastic);
     for (let i = 0; i < 4; i++) setTimeout(() => G.burst(M.rnd(300, 1000), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
     this.banner = { t0: G.t, title: pd.dragon.name + ' вырос!', sub: '★ ' + LEVELS[ps.level].title + ' ★', lvl: ps.level };
     Voice.say(pd.dragon.name + ' вырос! ' + (LEVELS[ps.level].ability || ''));
-    if (ps.level >= MAX_LEVEL && !ps.beacon) this.autoBeacon = setTimeout(() => this.lightBeacon(), 6500);
+    if (ps.level >= MAX_LEVEL && !ps.beacon) {
+      if (this.front === S.data.planet) this.autoBeacon = setTimeout(() => this.lightBeacon(), 6500);
+      else setTimeout(() => this.remoteBeacon(this.front), 5000);
+    }
     else setTimeout(() => { if (this.banner && this.banner.lvl === ps.level) this.banner.tapClose = true; }, 1500);
-    if (pd.special === 'serpent' && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 5000);
+    if (pd.special === 'serpent' && this.front === S.data.planet && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 5000);
   },
   lightBeacon() {
     if (G.sceneName !== 'home' || G.scene !== this) return;
     const dr = this.dr, pd = P(), ps = PS();
-    if (this.busy || ps.beacon || ps.level < MAX_LEVEL || dr.gone) return;
+    if (this.busy || ps.beacon || ps.level < MAX_LEVEL || dr.gone || this.front !== pd.id) return;
     clearTimeout(this.autoBeacon);
     // сразу сохраняем результат, анимация дальше — только красота
     ps.beacon = true;
@@ -279,6 +363,8 @@ G.scenes.home = {
     this.rescueBtn.hidden = !(ps.serpent === 'kidnapped' && ps.keys >= 3 && !this.busy);
     this.beaconBtn.hidden = !(ps.level >= MAX_LEVEL && !ps.beacon && !this.busy && !d.gone);
     this.feedBtn.hidden = d.gone;
+    if (P().id !== 'nyam') this.moveBtn.hidden = !this.canMove(P().id) || this.busy;
+    this.beaconBtn.hidden = this.beaconBtn.hidden || this.front !== P().id;
     this.mapBtn.pulse = !!(nx && S.data.unlocked.includes(nx.id) && !PS(nx.id).visited);
   },
   draw(ctx) {
@@ -292,11 +378,20 @@ G.scenes.home = {
       Art.cel(ctx, () => { ctx.beginPath(); ctx.moveTo(262, 606); ctx.lineTo(338, 606); ctx.lineTo(328, 640); ctx.lineTo(272, 640); ctx.closePath(); }, '#c8a070', '#8a6a40', null, 3.5, 5); }
     Art.astronaut(ctx, 470, 600, 1.1, { t, anim: this.as.anim, at: this.as.at, look: M.clamp((G.pointer.x - 470) / 500, -1, 1) });
     const dr = this.dr;
-    if (!dr.gone) Art.dragon(ctx, dr.x, dr.y, this.dragonScale(), {
-      t, blink: this.blink, mouth: dr.mouth, look: dr.look, squash: dr.squash, crack: ps.level === 0 ? ps.fed / levelNeed(0) : 0,
+    const back = this.backRow();
+    back.forEach((id, i) => { const [gx, gy] = this.guestPos(i), q = PS(id);
+      Art.dragon(ctx, gx, gy, 0.36 + q.level * 0.012, { planet: id, level: q.level, t: t + i * 0.7, blink: ((t + i) % 3.7 < 0.12) ? 1 : 0, look: M.clamp((dr.x - gx) / 300, -1, 1) }); });
+    if (this.moved && !dr.gone) { /* летит обратно */ }
+    if (this.moved) {
+      Art.ell(ctx, 650, 590, 90, 22, '#6a4a2a'); Art.stroke(ctx, 3);
+      Art.rr(ctx, 540, 470, 220, 70, 16); ctx.fillStyle = '#fff6e0'; ctx.fill(); Art.stroke(ctx, 4);
+      UI.text(ctx, 'В гостях', 650, 492, 24, '#8a5a2a', 'center', false); UI.text(ctx, 'на Ням-Ням', 650, 520, 24, '#8a5a2a', 'center', false);
+    }
+    if (!dr.gone || (this.moved && dr.flying)) Art.dragon(ctx, dr.x, dr.y, this.dragonScale(), { planet: this.front || P().id,
+      t, blink: this.blink, mouth: dr.mouth, look: dr.look, squash: dr.squash, crack: this.fps().level === 0 ? this.fps().fed / levelNeed(0, this.front) : 0,
       happy: dr.happyT > 0 && dr.mouth < 0.1, lift: dr.lift, flying: dr.flying, fire: dr.fire, tilt: dr.tilt,
     });
-    else if (!this.sp) { // пустое гнездо и следы змея
+    else if (!this.sp && !this.moved) { // пустое гнездо и следы змея
       Art.ell(ctx, 650, 590, 90, 22, '#6a4a2a'); Art.stroke(ctx, 3);
       ctx.save(); ctx.globalAlpha = 0.5; ctx.beginPath(); for (let x = 700; x < 1250; x += 10) ctx.lineTo(x, 600 + Math.sin(x * 0.03) * 12); Art.stroke(ctx, 10, '#3a2a1a'); ctx.restore();
       UI.text(ctx, '?', 650, 450, 90, '#fff', 'center', true);
@@ -312,22 +407,22 @@ G.scenes.home = {
     this.drawGrowth(ctx);
   },
   drawGrowth(ctx) {
-    const ps = PS(), pd = P(), cx = 640;
+    const ps = this.fps(), pd = this.fpd(), cx = 640;
     Art.rr(ctx, cx - 230, 14, 460, 104, 30); ctx.fillStyle = 'rgba(30,14,70,0.62)'; ctx.fill(); Art.stroke(ctx, 3, 'rgba(255,214,240,0.6)');
     UI.text(ctx, (ps.level === 0 ? 'Яйцо: ' : '') + pd.dragon.name + ' · ' + pd.name, cx, 42, 28, '#ffd6f0', 'center', true);
     if (ps.level === 0) {
-      UI.progress(ctx, cx - 190, 68, 380, 32, ps.fed / levelNeed(0), '#ffd23f');
-      UI.text(ctx, 'Согрей яйцо: ' + ps.fed + '/' + levelNeed(0), cx, 85, 20, '#fff', 'center', true);
+      UI.progress(ctx, cx - 190, 68, 380, 32, ps.fed / levelNeed(0, this.front), '#ffd23f');
+      UI.text(ctx, 'Согрей яйцо: ' + ps.fed + '/' + levelNeed(0, this.front), cx, 85, 20, '#fff', 'center', true);
       return;
     }
     for (let i = 1; i <= MAX_LEVEL; i++) Art.roundStar(ctx, cx - 202 + (i - 1) * 22, 88, 10, i <= ps.level ? '#ffd23f' : 'rgba(255,255,255,0.25)', '#2a1650');
     if (ps.level < MAX_LEVEL) {
-      UI.progress(ctx, cx + 20, 72, 190, 32, ps.fed / levelNeed(ps.level), '#ff7eb6');
-      UI.text(ctx, ps.fed + '/' + levelNeed(ps.level), cx + 115, 89, 20, '#fff', 'center', true);
+      UI.progress(ctx, cx + 20, 72, 190, 32, ps.fed / levelNeed(ps.level, this.front), '#ff7eb6');
+      UI.text(ctx, ps.fed + '/' + levelNeed(ps.level, this.front), cx + 115, 89, 20, '#fff', 'center', true);
     } else UI.text(ctx, ps.beacon ? 'Маяк сияет!' : 'Звёздный дракон!', cx + 118, 88, 19, '#ffd23f', 'center', true);
   },
   drawTop(ctx) {
-    UI.drawCounterTopRight(ctx);
+    UI.drawCounterTopRight(ctx, this.front || S.data.planet);
     ctx.save(); ctx.globalAlpha = 0.45; UI.text(ctx, 'версия ' + G.webVersion, G.view.x1 - 20, G.view.y1 - 18, 18, '#fff', 'right', false); ctx.restore();
     const b = this.banner;
     if (b) {

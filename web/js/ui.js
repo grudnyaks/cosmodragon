@@ -52,12 +52,12 @@ const UI = {
     ctx.restore();
   },
   // счётчик вкусняшек в левом/правом верхнем углу
-  counter(ctx, x, y, n, bump) {
+  counter(ctx, x, y, n, bump, pid) {
     const sc = 1 + (bump || 0) * 0.25;
     ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
     Art.rr(ctx, -10, -32, 170, 64, 32); ctx.fillStyle = 'rgba(42,22,80,0.75)'; ctx.fill();
     ctx.lineWidth = 4; ctx.strokeStyle = '#ffd6f0'; ctx.stroke();
-    Art.treat(ctx, 0, 22, 2, 0.62);
+    Art.treat(ctx, 0, 22, 2, 0.62, G.t, pid);
     UI.text(ctx, String(n), 100, 2, 40, '#fff', 'center', true);
     ctx.restore();
   },
@@ -70,8 +70,8 @@ const UI = {
     return UI.add(scene, { x: G.view.x0 + 70, y: 70, r: 46, icon: 'home', color: '#ff7eb6', onTap: () => G.go('home') });
   },
   // летящая вкусняшка к счётчику
-  flyTreat(type, x0, y0, x1, y1, delay, done) {
-    const o = { x: x0, y: y0, k: 0, type };
+  flyTreat(type, x0, y0, x1, y1, delay, done, pid) {
+    const o = { x: x0, y: y0, k: 0, type, pid };
     G.flying = G.flying || [];
     G.flying.push(o);
     G.tween(o, { k: 1 }, 0.7, G.ease.inOutQuad, () => { G.flying.splice(G.flying.indexOf(o), 1); done && done(); }, delay || 0);
@@ -82,7 +82,7 @@ const UI = {
     for (const o of G.flying) {
       if (o.k <= 0) continue;
       const x = M.lerp(o.x0, o.x1, o.k), y = M.lerp(o.y0, o.y1, o.k) - Math.sin(o.k * Math.PI) * 140;
-      Art.treat(ctx, o.type, x, y, 0.6 - o.k * 0.15, G.t);
+      Art.treat(ctx, o.type, x, y, 0.6 - o.k * 0.15, G.t, o.pid);
     }
   },
   // Награда: вкусняшки летят в счётчик
@@ -97,9 +97,9 @@ const UI = {
   },
   counterBump: 0, pending: 0,
   reset() { UI.pending = 0; G.flying = []; },
-  drawCounterTopRight(ctx) {
+  drawCounterTopRight(ctx, pid) {
     UI.counterBump = Math.max(0, UI.counterBump - G.dt * 4);
-    UI.counter(ctx, G.view.x1 - 190, 60, PS().treats - UI.pending, UI.counterBump);
+    UI.counter(ctx, G.view.x1 - 190, 60, PS(pid).treats - (pid && pid !== S.data.planet ? 0 : UI.pending), UI.counterBump, pid);
     UI.drawFlying(ctx);
   },
 };
