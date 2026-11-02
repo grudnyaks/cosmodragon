@@ -17,8 +17,16 @@ window.onUpdateReady = function () {
   }
 };
 const _go = G.go;
+// время игры: при включённом напоминании после N минут при следующем переходе — перерыв
+setInterval(() => {
+  if (document.hidden || G.sceneName === 'rest') return;
+  S.data.playSec = (S.data.playSec || 0) + 1;
+  if (S.data.playSec % 15 === 0) S.save();
+}, 1000);
+function restDue() { return S.data.breakMin > 0 && S.data.playSec >= S.data.breakMin * 60; }
 G.go = function (name, args) {
   if (G.updateReady && (name === 'home' || name === 'map')) { applyUpdate(); return; }
+  if (name !== 'rest' && G.sceneName !== 'rest' && restDue()) { _go('rest'); return; }
   _go(name, args);
 };
 window.onAppPause = function () { Sound.pause(); };
@@ -34,6 +42,6 @@ if (qs.has('diff')) S.data.diff = +qs.get('diff');
 if (qs.has('mute')) S.data.voice = false;
 S.save();
 
-const first = qs.get('scene') || (S.data.introSeen ? (PS().visited ? 'home' : 'intro') : 'intro');
+const first = qs.get('scene') || (S.data.restUntil > Date.now() ? 'rest' : S.data.introSeen ? (PS().visited ? 'home' : 'intro') : 'intro');
 G.start(first, { planet: S.data.planet });
 G.run();

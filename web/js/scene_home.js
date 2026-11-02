@@ -37,12 +37,13 @@ G.scenes.home = {
     UI.add(this, { x: tx(1), y: 56, r: 35, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro', { planet: pd.id }); } });
     UI.add(this, { x: tx(2), y: 56, r: 35, icon: 'skills', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('skills'); } });
     UI.add(this, { x: tx(3), y: 56, r: 35, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
+    UI.add(this, { x: tx(5), y: 56, r: 35, icon: 'school', color: '#41d982', pulse: !Learn.data().sessions, onTap: () => { Voice.stop(); G.go('school'); } });
     this.mapBtn = UI.add(this, { x: tx(4), y: 56, r: 35, icon: 'galaxy', color: '#8f6cf2', badge: null, onTap: () => { Voice.stop(); G.go('map'); } });
     if (pd.id === 'nyam') this.moveBtn = UI.add(this, { x: 950, y: 270, r: 42, icon: 'gather', color: '#41d982', onTap: () => this.gatherAll() });
     else this.moveBtn = UI.add(this, { x: 950, y: 270, r: 42, icon: 'move', color: '#41d982', hidden: true, onTap: () => this.sendToNyam() });
     this.returnBtn = UI.add(this, { x: 650, y: 430, w: 480, h: 84, label: 'Вернуть ' + pd.dragon.acc + ' домой', icon: 'move', iconX: -190, fontSize: 30, color: '#41d982', pulse: true, hidden: !this.moved,
       onTap: () => this.returnHome() });
-    this.updBtn = UI.add(this, { x: tx(5), y: 56, r: 35, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
+    this.updBtn = UI.add(this, { x: tx(6), y: 56, r: 35, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     this.flyBtn = UI.add(this, { x: 640, y: 168, w: 520, h: 84, label: 'Лететь дальше!', icon: 'galaxy', iconX: -200, fontSize: 34, color: '#8f6cf2', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('map', { reveal: (nextPlanet(P().id) || {}).id }); } });
     this.beaconBtn = UI.add(this, { x: 640, y: 168, w: 480, h: 84, label: 'Зажечь маяк!', icon: 'star', iconX: -180, fontSize: 34, color: '#ffb23a', pulse: true, hidden: true,

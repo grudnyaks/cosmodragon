@@ -7,7 +7,7 @@ const S = {
   defaults() {
     return {
       v: 2, planet: 'nyam', unlocked: ['nyam'], planets: {},
-      music: true, voice: true, introSeen: false, diff: 4,
+      music: true, voice: true, introSeen: false, diff: 4, breakMin: 0, playSec: 0, restUntil: 0,
       stats: {}, ach: {}, newAch: [],
     };
   },

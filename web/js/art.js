@@ -747,6 +747,13 @@ const Art = {};
       case 'snake':
         ctx.beginPath(); ctx.moveTo(-24, 18); ctx.quadraticCurveTo(-24, -6, -4, -4); ctx.quadraticCurveTo(14, -2, 14, -20); outline(ctx, 12, L); ctx.beginPath(); ctx.moveTo(-24, 18); ctx.quadraticCurveTo(-24, -6, -4, -4); ctx.quadraticCurveTo(14, -2, 14, -20); outline(ctx, 8, '#41d982');
         ell(ctx, 14, -22, 8, 8, '#41d982'); outline(ctx, 2.5, L); ell(ctx, 16, -24, 2, 2, L); Art.treatNamed && Art.treatNamed(ctx, 'banana', 18, 18, 0.32); break;
+      case 'school':
+        Art.rr(ctx, -30, -24, 60, 42, 6); ctx.fillStyle = '#2f5a48'; ctx.fill(); outline(ctx, 4, '#8a5a2a');
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('АБВ', 0, -3);
+        ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(-24, 30); ctx.moveTo(18, 18); ctx.lineTo(24, 30); outline(ctx, 4, '#8a5a2a'); break;
+      case 'moon':
+        ctx.beginPath(); ctx.arc(0, 0, 24, 0.6, Math.PI * 2 - 0.6, false); ctx.quadraticCurveTo(-4, 0, 19, 13); ctx.closePath(); ctx.fillStyle = '#ffe9a0'; ctx.fill(); outline(ctx, 3, L);
+        Art.roundStar(ctx, 14, -14, 6, '#fff'); break;
       case 'galaxy':
         ctx.save(); ctx.rotate(-0.4); ell(ctx, 0, 0, 30, 12, '#b07cff'); outline(ctx, 3, L); ctx.restore();
         ell(ctx, 0, 0, 13, 13, '#ffd23f'); outline(ctx, 3, L);
