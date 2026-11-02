@@ -99,7 +99,9 @@ G.scenes.ach = {
     const legend = [['#41d982', 'знает'], ['#ffd23f', 'учит'], ['#ff6f8a', 'путает'], ['#9a8ac0', 'ещё не спрашивали'], ['rgba(80,60,130,0.5)', 'откроется позже']];
     const lx = [170, 320, 460, 630, 900]; legend.forEach(([c, s], i) => { Art.ell(ctx, lx[i], 590, 13, 13, c); Art.stroke(ctx, 2); UI.text(ctx, s, lx[i] + 20, 591, 19, '#fff', 'left', false); });
     const trouble = ALPHABET.filter(L => { const r = Learn.data().L[L]; return r && r.bad > r.ok; }).concat(NUMBERS.filter(n => { const r = Learn.data().N[n]; return r && r.bad > r.ok; }).map(String));
-    UI.text(ctx, (trouble.length ? 'Стоит повторить: ' + trouble.join(', ') : 'Путаницы пока нет — молодец!') + '   ·   Уроков пройдено: ' + Learn.data().sessions, 640, 650, 22, '#ffe9a0', 'center', true);
+    UI.text(ctx, (trouble.length ? 'Стоит повторить: ' + trouble.join(', ') : 'Путаницы пока нет — молодец!') + '   ·   Уроков пройдено: ' + Learn.data().sessions, 640, 640, 22, '#ffe9a0', 'center', true);
+    const D = Learn.data(), syl = Object.values(D.S || {}).filter(r => r.ok > r.bad).length, words = Object.values(D.W || {}).filter(r => r.ok > 0).length;
+    UI.text(ctx, 'Написал знаков: ' + Object.keys(D.T || {}).length + ' из 43  ·  Читает слогов: ' + syl + '  ·  Прочитал слов: ' + words + '  ·  Считает до ' + (D.openC || 20), 640, 680, 21, '#ffffff', 'center', true);
   },
   drawTop(ctx) { },
 };

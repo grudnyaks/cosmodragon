@@ -13,14 +13,19 @@ G.scenes.school = {
   // ---------- меню ----------
   menu() {
     const tiles = [
-      { kind: 'L', mode: 'learn', label: 'Учим буквы', sub: 'А Б В', color: '#ff7eb6', x: 420, y: 300 },
-      { kind: 'L', mode: 'quiz', label: 'Игра с буквами', sub: '?', color: '#b07cff', x: 860, y: 300 },
-      { kind: 'N', mode: 'learn', label: 'Учим цифры', sub: '1 2 3', color: '#41d982', x: 420, y: 520 },
-      { kind: 'N', mode: 'quiz', label: 'Игра с цифрами', sub: '?', color: '#ff9a3c', x: 860, y: 520 },
+      { go: ['school', { mode: 'learn', kind: 'L' }], label: 'Учим буквы', sub: 'Аа', color: '#ff7eb6' },
+      { go: ['school', { mode: 'quiz', kind: 'L' }], label: 'Игра с буквами', sub: '?', color: '#b07cff' },
+      { go: ['trace', { kind: 'L' }], label: 'Пишем буквы', sub: '✎', color: '#ff5e9a' },
+      { go: ['school', { mode: 'learn', kind: 'N' }], label: 'Учим цифры', sub: '123', color: '#41d982' },
+      { go: ['school', { mode: 'quiz', kind: 'N' }], label: 'Игра с цифрами', sub: '?', color: '#ff9a3c' },
+      { go: ['trace', { kind: 'N' }], label: 'Пишем цифры', sub: '✎', color: '#2fb5a0' },
+      { go: ['read', { mode: 'syl' }], label: 'Слоги', sub: 'МА', color: '#4fb7ff' },
+      { go: ['read', { mode: 'words' }], label: 'Читаем слова', sub: 'ЛУ-НА', color: '#3a8ad8', small: true },
+      { go: ['hundred', { mode: 'board' }], label: 'Счёт до 100', sub: '100', color: '#ffb23a' },
     ];
     this.tiles = tiles;
-    tiles.forEach(t => UI.add(this, { x: t.x, y: t.y, w: 400, h: 170, color: t.color, onTap: () => { Voice.stop(); G.go('school', { mode: t.mode, kind: t.kind }); },
-      draw: (ctx) => { UI.text(ctx, t.sub, -125, 0, t.sub === '?' ? 80 : 40, '#fff', 'center', true); UI.text(ctx, t.label, 62, 0, 30, '#fff', 'center', true); } }));
+    tiles.forEach((t, i) => UI.add(this, { x: 270 + (i % 3) * 370, y: 225 + Math.floor(i / 3) * 150, w: 350, h: 124, color: t.color, onTap: () => { Voice.stop(); G.go(t.go[0], t.go[1]); },
+      draw: (ctx) => { UI.text(ctx, t.sub, -110, 0, t.sub === '?' || t.sub === '✎' ? 64 : t.small ? 28 : 40, '#fff', 'center', true); UI.text(ctx, t.label, 50, 0, 27, '#fff', 'center', true); } }));
     Voice.say(P().dragon.name + ' хочет учиться! Научи его буквам и цифрам. Выбери, что будем делать.');
   },
   // ---------- карточки «учим» ----------
@@ -145,11 +150,12 @@ G.scenes.school = {
     if (this.mode !== 'menu') { Art.rr(ctx, 120, 110, 1040, 400, 26); ctx.fillStyle = '#2f5a48'; ctx.fill(); Art.stroke(ctx, 8, '#8a5a2a'); }
     const d = this.dr;
     if (this.mode === 'menu') {
-      UI.text(ctx, 'Школа дракона', 640, 100, 56, '#ffd6f0', 'center', true);
-      Art.dragon(ctx, 1180, 700, 0.5, { t, happy: true });
+      UI.text(ctx, 'Школа дракона', 640, 110, 50, '#ffd6f0', 'center', true);
+      Art.dragon(ctx, 1210, 712, 0.36, { t, happy: true });
       const L = Learn.data();
       const kl = ALPHABET.filter(x => Learn.known('L', x)).length, kn = NUMBERS.filter(x => Learn.known('N', x)).length;
-      UI.text(ctx, 'Знаю букв: ' + kl + ' из 33   ·   Знаю цифр: ' + kn + ' из 11', 640, 660, 26, '#fff', 'center', true);
+      const tr = Object.keys(L.T || {}).length;
+      UI.text(ctx, 'Знаю букв: ' + kl + ' из 33  ·  цифр: ' + kn + ' из 11  ·  написал: ' + tr + '  ·  считаю до ' + (L.openC || 20), 640, 680, 23, '#fff', 'center', true);
       return;
     }
     if (this.mode === 'learn') {
