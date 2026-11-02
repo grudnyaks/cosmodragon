@@ -20,7 +20,7 @@ G.scenes.home = {
     this.as = { anim: 'idle', at: 0, until: 0, phrase: 0 };
     this.rk = { lift: 0, flame: 0, busy: false, act: 0, pilotWave: 0, lights: 0 };
     this.blinkT = 2; this.blink = 0; this.taps = 0;
-    this.banner = null; this.busy = false;
+    this.banner = null; this.busy = false; this.lighting = false;
     // кнопки игр
     const games = pd.games, n = games.length, step = n > 7 ? 108 : 130, r = n > 7 ? 47 : 52;
     const x0 = 640 - (n - 1) * step / 2 - 30;
@@ -34,8 +34,10 @@ G.scenes.home = {
     UI.add(this, { x: tx(3), y: 56, r: 35, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
     this.mapBtn = UI.add(this, { x: tx(4), y: 56, r: 35, icon: 'galaxy', color: '#8f6cf2', badge: null, onTap: () => { Voice.stop(); G.go('map'); } });
     this.updBtn = UI.add(this, { x: tx(5), y: 56, r: 35, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
-    this.flyBtn = UI.add(this, { x: 640, y: 420, w: 520, h: 84, label: 'Лететь дальше!', icon: 'galaxy', iconX: -200, fontSize: 34, color: '#8f6cf2', pulse: true, hidden: true,
+    this.flyBtn = UI.add(this, { x: 640, y: 168, w: 520, h: 84, label: 'Лететь дальше!', icon: 'galaxy', iconX: -200, fontSize: 34, color: '#8f6cf2', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('map', { reveal: (nextPlanet(P().id) || {}).id }); } });
+    this.beaconBtn = UI.add(this, { x: 640, y: 168, w: 480, h: 84, label: 'Зажечь маяк!', icon: 'star', iconX: -180, fontSize: 34, color: '#ffb23a', pulse: true, hidden: true,
+      onTap: () => this.lightBeacon() });
     this.rescueBtn = UI.add(this, { x: 650, y: 430, w: 460, h: 84, label: 'Спасти ' + (pd.id === 'jungle' ? 'Листика' : ''), icon: 'sword', iconX: -170, fontSize: 34, color: '#ff3b5c', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('serpent'); } });
     // воришка (Радуга)
@@ -43,8 +45,11 @@ G.scenes.home = {
     // змей (Джунгли)
     this.sp = null;
     if (pd.special === 'serpent' && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 1500);
-    if (!this.greeted) { this.greeted = true; setTimeout(() => this.hello(), 700); }
+    if (ps.level >= MAX_LEVEL && !ps.beacon && ps.serpent !== 'kidnapped') {
+      this.autoBeacon = setTimeout(() => this.lightBeacon(), 2500);
+    } else if (!this.greeted) { this.greeted = true; setTimeout(() => this.hello(), 700); }
   },
+  exit() { clearTimeout(this.autoBeacon); },
   hello() {
     if (G.sceneName !== 'home') return;
     const ps = PS(), pd = P();
@@ -61,6 +66,12 @@ G.scenes.home = {
   down(x, y) {
     if (this.banner && this.banner.tapClose && G.t - this.banner.t0 > 1) { this.banner = null; return; }
     if (this.th && (this.th.state === 'sneak' || this.th.state === 'flee') && Math.abs(x - this.th.x) < 70 && y > 430 && y < 640) return this.scareThief();
+    if (Math.abs(x - 1150) < 60 && y > 330 && y < 520) {
+      const ps = PS();
+      if (ps.level >= MAX_LEVEL && !ps.beacon) return this.lightBeacon();
+      Sound.chime(ps.beacon ? 1.2 : 0.7);
+      return Voice.say(ps.beacon ? 'Маяк сияет! Его луч показывает путь к новой планете.' : 'Маяк погас. Вырасти дракончика до десятого уровня, и он его зажжёт!');
+    }
     if (this.dragonHit(x, y)) return this.petDragon();
     if (Math.abs(x - 470) < 55 && y > 420 && y < 630) return this.tapAstro();
     if (Math.abs(x - 190) < 85 && y > 120 - this.rk.lift && y < 600 - this.rk.lift) return this.tapRocket();
@@ -168,28 +179,35 @@ G.scenes.home = {
     for (let i = 0; i < 4; i++) setTimeout(() => G.burst(M.rnd(300, 1000), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
     this.banner = { t0: G.t, title: pd.dragon.name + ' вырос!', sub: '★ ' + LEVELS[ps.level].title + ' ★', lvl: ps.level };
     Voice.say(pd.dragon.name + ' вырос! ' + (LEVELS[ps.level].ability || ''));
-    if (ps.level >= MAX_LEVEL && !ps.beacon) setTimeout(() => this.lightBeacon(), 6500);
+    if (ps.level >= MAX_LEVEL && !ps.beacon) this.autoBeacon = setTimeout(() => this.lightBeacon(), 6500);
     else setTimeout(() => { if (this.banner && this.banner.lvl === ps.level) this.banner.tapClose = true; }, 1500);
     if (pd.special === 'serpent' && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 5000);
   },
   lightBeacon() {
-    if (G.sceneName !== 'home') return;
-    const dr = this.dr, pd = P(), ps = PS(); this.busy = true; this.banner = null;
+    if (G.sceneName !== 'home' || G.scene !== this) return;
+    const dr = this.dr, pd = P(), ps = PS();
+    if (this.busy || ps.beacon || ps.level < MAX_LEVEL || dr.gone) return;
+    clearTimeout(this.autoBeacon);
+    // сразу сохраняем результат, анимация дальше — только красота
+    ps.beacon = true;
+    const nx0 = nextPlanet(pd.id);
+    if (nx0 && !S.data.unlocked.includes(nx0.id)) S.data.unlocked.push(nx0.id);
+    S.save(); stat('beacons');
+    this.lighting = true;
+    this.busy = true; this.banner = null;
     dr.flying = true;
     Voice.say('Полетели к маяку!');
     G.tween(dr, { x: 980, lift: 220 }, 2.2, G.ease.inOutQuad, () => {
       dr.look = 1; Sound.fire(); dr.fire = 0.01;
       G.tween(dr, { fire: 1 }, 0.4, G.ease.outQuad, () => {
-        ps.beacon = true;
+        this.lighting = false;
         const nx = nextPlanet(pd.id);
-        if (nx && !S.data.unlocked.includes(nx.id)) S.data.unlocked.push(nx.id);
-        S.save(); stat('beacons');
         Sound.win(); Sound.magic();
         for (let i = 0; i < 8; i++) setTimeout(() => { G.burst(M.rnd(200, 1100), M.rnd(80, 350), { kind: 'star', n: 26, speed: 340, g: 120 }); Sound.chime(M.rnd(0.8, 1.4)); }, i * 350);
         Voice.say(pd.beaconText || 'Маяк зажёгся! Все звёзды вернулись на небо. Луч маяка показал путь к новой планете!');
         this.banner = { t0: G.t, title: 'Маяк зажёгся!', sub: nx ? 'Луч показал путь на планету ' + nx.name : 'Все маяки галактики горят!', final: true, tapClose: false };
         G.tween(dr, { fire: 0 }, 0.6, G.ease.linear, () => {
-          G.tween(dr, { x: 650, lift: 0 }, 2.2, G.ease.inOutQuad, () => { dr.flying = false; dr.look = 0; this.busy = false; if (this.banner) this.banner.tapClose = true; }, 1.5);
+          G.tween(dr, { x: 650, lift: 0 }, 2.2, G.ease.inOutQuad, () => { dr.flying = false; dr.look = 0; this.busy = false; this.banner = null; Voice.say(nx ? 'Нажми «Лететь дальше», чтобы отправиться на планету ' + nx.name + '!' : 'Ты зажёг все маяки галактики! Ура!'); }, 1.5);
         }, 0.8);
       });
     });
@@ -259,12 +277,13 @@ G.scenes.home = {
     const nx = nextPlanet(P().id);
     this.flyBtn.hidden = !(ps.beacon && nx && !(PS(nx.id).visited) && !this.busy);
     this.rescueBtn.hidden = !(ps.serpent === 'kidnapped' && ps.keys >= 3 && !this.busy);
+    this.beaconBtn.hidden = !(ps.level >= MAX_LEVEL && !ps.beacon && !this.busy && !d.gone);
     this.feedBtn.hidden = d.gone;
     this.mapBtn.pulse = !!(nx && S.data.unlocked.includes(nx.id) && !PS(nx.id).visited);
   },
   draw(ctx) {
     const t = G.t, ps = PS(), pd = P();
-    World.bg(ctx, t);
+    World.bg(ctx, t, { beaconOff: this.lighting });
     const rk = this.rk;
     Art.rocket(ctx, 190, World.GROUND + 25 - rk.lift, 0.8, { t, flame: rk.flame, glowBase: rk.lift < 5, pilot: rk.pilotWave > 0, pilotWave: rk.pilotWave > 0 });
     if (rk.lights > 0) for (let i = 0; i < 4; i++) { const on = Math.sin(t * 16 + i) > 0; if (on) { ctx.save(); ctx.globalAlpha = 0.6; Art.ell(ctx, 190 + (i - 1.5) * 40, World.GROUND + 25 - rk.lift - 140 - (i % 2) * 120, 14, 14, ['#ff3b5c', '#41ff82', '#ffe14a', '#7ee8ff'][i]); ctx.restore(); } }

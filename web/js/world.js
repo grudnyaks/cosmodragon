@@ -5,7 +5,7 @@ const World = {
   bg(ctx, t, opt) {
     opt = opt || {};
     const pd = PLANET_BY_ID[opt.planet || S.data.planet] || PLANETS[0];
-    const lit = (S.data.planets[pd.id] || {}).beacon;
+    const lit = !opt.beaconOff && (S.data.planets[pd.id] || {}).beacon;
     const v = G.view;
     // небо
     const g = ctx.createLinearGradient(0, v.y0, 0, World.GROUND);
