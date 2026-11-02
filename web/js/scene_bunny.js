@@ -2,7 +2,7 @@
 'use strict';
 G.scenes.bunny = {
   enter() {
-    const lvl = S.data.bunny;
+    const lvl = GL('bunny');
     const nHoles = lvl < 2 ? 6 : 9;
     const rows = nHoles === 6 ? [[330, 640, 950], [330, 640, 950]] : [[330, 640, 950], [330, 640, 950], [330, 640, 950]];
     const ys = nHoles === 6 ? [440, 620] : [380, 520, 660];
@@ -42,7 +42,7 @@ G.scenes.bunny = {
   },
   win() {
     this.won = true;
-    S.data.bunny++; S.save();
+    GW('bunny');
     Sound.win(); Sound.purr(1.6);
     UI.reward(6, 640, 400);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
@@ -94,8 +94,8 @@ G.scenes.bunny = {
         ctx.save();
         ctx.beginPath(); ctx.rect(h.x - 120, h.y - 260, 240, 262); ctx.clip();
         const yy = h.y + (1 - G.ease.outBack(h.up)) * 150 * sc;
-        if (h.kind === 'bunny') Art.bunny(ctx, h.x, yy + 10, 0.9 * sc, t, h.hit ? 1 : 0);
-        else Art.meteor(ctx, h.x, yy - 50 * sc, 48 * sc, t * 2, 4);
+        if (h.kind === 'bunny') Art.critter(ctx, null, h.x, yy + 10, 0.9 * sc, t, h.hit ? 1 : 0);
+        else Art.obstacle(ctx, null, h.x, yy - 50 * sc, 48 * sc, t * 2, t, 4);
         ctx.restore();
       }
       // передний край кратера
@@ -103,7 +103,7 @@ G.scenes.bunny = {
     }
     // табло
     UI.progress(ctx, 400, 26, 480, 46, this.score / this.goal, '#ff6f91');
-    Art.bunny(ctx, 400, 70, 0.32, t, 0);
+    Art.critter(ctx, null, 400, 70, 0.32, t, 0);
     UI.text(ctx, this.score + ' / ' + this.goal, 640, 50, 30, '#fff', 'center', true);
     // часики
     const k = this.time / 40;

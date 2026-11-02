@@ -705,6 +705,34 @@ const Art = {};
         break;
       }
       case 'bunny': Art.bunny(ctx, 0, 26, 0.42, t, 0); break;
+      case 'maze':
+        Art.rr(ctx, -28, -28, 56, 56, 8); ctx.fillStyle = '#fff3d6'; ctx.fill(); outline(ctx, 4, L);
+        ctx.beginPath(); ctx.moveTo(-28, -8); ctx.lineTo(8, -8); ctx.moveTo(-8, 10); ctx.lineTo(28, 10); ctx.moveTo(8, -28); ctx.lineTo(8, -8); outline(ctx, 5, L);
+        ell(ctx, -18, -18, 6, 6, '#ff5e9a'); Art.roundStar(ctx, 18, 20, 7, '#ffd23f'); break;
+      case 'flyer':
+        Art.icon(ctx, 'wing', -4, 0, 0.9); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+        for (const yy of [-12, 0, 12]) { ctx.beginPath(); ctx.moveTo(18, yy); ctx.lineTo(32, yy); ctx.stroke(); } break;
+      case 'pop':
+        for (const [bx, by, r, c] of [[-12, 8, 16, '#7ee8ff'], [12, -8, 18, '#ff9ad5'], [14, 18, 10, '#ffe14a']]) { ell(ctx, bx, by, r, r, c); outline(ctx, 3, L); ell(ctx, bx - r * 0.35, by - r * 0.4, r * 0.25, r * 0.15, '#fff'); }
+        ctx.fillStyle = L; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('3', 12, -3); break;
+      case 'sort':
+        ctx.beginPath(); ctx.moveTo(-28, -2); ctx.lineTo(28, -2); ctx.lineTo(20, 28); ctx.lineTo(-20, 28); ctx.closePath(); ctx.fillStyle = '#c8a070'; ctx.fill(); outline(ctx, 4, L);
+        ell(ctx, -10, -14, 9, 9, '#ff4a6a'); outline(ctx, 3, L); ell(ctx, 10, -18, 9, 9, '#3a8aff'); outline(ctx, 3, L); break;
+      case 'galaxy':
+        ctx.save(); ctx.rotate(-0.4); ell(ctx, 0, 0, 30, 12, '#b07cff'); outline(ctx, 3, L); ctx.restore();
+        ell(ctx, 0, 0, 13, 13, '#ffd23f'); outline(ctx, 3, L);
+        Art.roundStar(ctx, -22, -18, 6, '#fff'); Art.roundStar(ctx, 22, 16, 5, '#fff'); break;
+      case 'trophy':
+        ctx.beginPath(); ctx.moveTo(-18, -24); ctx.lineTo(18, -24); ctx.quadraticCurveTo(18, 6, 0, 8); ctx.quadraticCurveTo(-18, 6, -18, -24); ctx.closePath(); ctx.fillStyle = '#ffd23f'; ctx.fill(); outline(ctx, 4, L);
+        for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * 20, -14, 8, sd < 0 ? Math.PI * 0.5 : -Math.PI * 0.5, sd < 0 ? Math.PI * 1.5 : Math.PI * 0.5); outline(ctx, 4, L); }
+        ctx.fillStyle = '#ffd23f'; ctx.fillRect(-5, 8, 10, 10); Art.rr(ctx, -16, 18, 32, 9, 3); ctx.fill(); outline(ctx, 3, L);
+        Art.roundStar(ctx, 0, -10, 7, '#fff6b0'); break;
+      case 'key':
+        ell(ctx, -12, 0, 13, 13, '#ffd23f'); outline(ctx, 4, L); ell(ctx, -12, 0, 5, 5, L);
+        ctx.fillStyle = '#ffd23f'; ctx.fillRect(0, -4, 28, 8); ctx.fillRect(18, 4, 5, 9); ctx.fillRect(26, 4, 5, 7); outline(ctx, 3, L); break;
+      case 'sword':
+        ctx.save(); ctx.rotate(0.7); ctx.fillStyle = '#e8ecf8'; ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(-5, -26); ctx.lineTo(0, -34); ctx.lineTo(5, -26); ctx.lineTo(5, 10); ctx.closePath(); ctx.fill(); outline(ctx, 3, L);
+        ctx.fillStyle = '#ffd23f'; ctx.fillRect(-14, 10, 28, 6); ctx.fillStyle = '#a8742a'; ctx.fillRect(-4, 16, 8, 14); ctx.restore(); break;
       case 'hint':
         ell(ctx, 0, -6, 18, 18, '#fff3a0'); outline(ctx, 4, L); Art.rr(ctx, -8, 12, 16, 12, 3); ctx.fillStyle = '#c6b6ff'; ctx.fill(); outline(ctx, 3, L); break;
     }

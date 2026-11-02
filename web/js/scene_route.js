@@ -2,7 +2,7 @@
 'use strict';
 G.scenes.route = {
   enter() {
-    const lvl = S.data.route;
+    const lvl = GL('route');
     this.start = { x: 130, y: 380, r: 80 };
     this.rx = 235; this.ry = 380;
     const pal = M.pick([['#ffd0f0', '#ff7eb6'], ['#d4fff6', '#38d6c3'], ['#fff3c0', '#ffb23a'], ['#e3d6ff', '#8f6cf2']]);
@@ -28,7 +28,7 @@ G.scenes.route = {
     this.rocket = { x: this.rx, y: this.ry, rot: Math.PI / 2, shake: 0 };
     this.shield = hasAbility('shield2') ? 2 : hasAbility('wings') ? 1 : 0;
     this.speed = Math.min(340 + lvl * 12, 480); this.collected = 0; this.won = false;
-    this.tutorial = S.data.route === 0;
+    this.tutorial = !PS().games.route && P().id === 'nyam';
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 360, r: 70, icon: 'next', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('route') });
     Voice.say('Проведи пальцем дорожку от ракеты до планеты. Облетай метеориты и собирай звёздочки!');
@@ -71,7 +71,7 @@ G.scenes.route = {
       Sound.bump(); Sound.chime(0.8);
       G.burst(m.x, m.y, { kind: 'dot', n: 18, colors: ['#b39a86', '#ffd23f', '#7ee8ff'], speed: 260 });
       G.floatText(m.x, m.y - 50, 'Щит!', '#7ee8ff');
-      Voice.say('Дракоша защитил ракету!');
+      Voice.say(P().dragon.name + ' защитил ракету!');
       return;
     }
     this.flying = false; this.path = null;
@@ -82,7 +82,7 @@ G.scenes.route = {
   },
   win() {
     this.won = true; this.flying = false;
-    S.data.route++; S.save();
+    GW('route');
     Sound.win();
     const n = 2 + this.collected + (this.meteors.length >= 8 ? 2 : 0);
     UI.reward(n, this.target.x, this.target.y);
@@ -118,8 +118,7 @@ G.scenes.route = {
   },
   draw(ctx) {
     const t = G.t;
-    Art.sky(ctx, '#0c0830', '#22175e', '#3a2a90');
-    Art.stars(ctx, 41, 160, t);
+    World.space(ctx, t);
     // стартовая и целевая планеты
     Art.planet(ctx, this.start.x - 40, this.start.y, this.start.r, '#9ff0e0', '#2a8f8a');
     const tg = this.target;
@@ -129,7 +128,7 @@ G.scenes.route = {
     // звёздочки
     for (const s of this.stars) if (!s.got) { ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(Math.sin(t * 2 + s.x) * 0.2); Art.roundStar(ctx, 0, 0, 26 + Math.sin(t * 4 + s.y) * 3, '#ffd23f', '#2a1650'); ctx.restore(); }
     // метеориты
-    for (const m of this.meteors) if (m.alive) Art.meteor(ctx, m.x, m.y, m.r, m.rot, m.seed);
+    for (const m of this.meteors) if (m.alive) Art.obstacle(ctx, null, m.x, m.y, m.r, m.rot, t, m.seed);
     // дорожка
     if (this.path && this.path.length > 1) {
       ctx.save(); ctx.globalAlpha = this.fade > 0 ? this.fade : 1;
@@ -152,7 +151,7 @@ G.scenes.route = {
       const k = (t * 0.4) % 1, x = M.lerp(this.rx, tg.x, k), y = M.lerp(this.ry, tg.y, k) - Math.sin(k * Math.PI) * 160;
       ctx.save(); ctx.globalAlpha = 0.8; Art.ell(ctx, x, y, 26, 26, '#fff'); ctx.lineWidth = 5; ctx.strokeStyle = '#ff7eb6'; ctx.stroke(); ctx.restore();
     }
-    if (this.shield > 0) { Art.dragon(ctx, 90, 700, 0.35, { t, level: S.data.level, flying: true, lift: 10 }); }
+    if (this.shield > 0) { Art.dragon(ctx, 90, 700, 0.35, { t, flying: true, lift: 10 }); }
   },
   drawTop(ctx) { UI.drawCounterTopRight(ctx); },
 };

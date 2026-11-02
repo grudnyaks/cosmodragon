@@ -2,7 +2,7 @@
 'use strict';
 G.scenes.simon = {
   enter() {
-    const lvl = S.data.simon;
+    const lvl = GL('simon');
     const n = lvl >= 3 ? 5 : 4;
     const colors = ['#ff7eb6', '#4fb7ff', '#ffd23f', '#41d982', '#b07cff'];
     const xs = n === 4 ? [250, 510, 770, 1030] : [200, 420, 640, 860, 1080];
@@ -59,7 +59,7 @@ G.scenes.simon = {
   },
   win() {
     this.won = true;
-    S.data.simon++; S.save();
+    GW('simon');
     Sound.win(); Sound.purr(1.6); this.dr.happy = 4;
     UI.reward(5, 640, 400);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
@@ -69,10 +69,8 @@ G.scenes.simon = {
   update(dt) { this.dr.happy = Math.max(0, this.dr.happy - dt); },
   draw(ctx) {
     const t = G.t;
-    Art.sky(ctx, '#140c44', '#3a2a90', '#7a4bc4');
-    Art.stars(ctx, 71, 120, t);
+    World.calm(ctx, t, 0.4);
     // пещера-сцена
-    Art.ground(ctx, 560, t, ['#4a3a8a', '#3a2a70', '#2a1f55']);
     for (const c of this.cr) {
       if (c.lit > 0) {
         ctx.save(); ctx.globalAlpha = c.lit * 0.8;
@@ -83,7 +81,7 @@ G.scenes.simon = {
       Art.crystal(ctx, c.x, c.y, sc, c.c);
       if (c.lit > 0) { ctx.save(); ctx.globalAlpha = c.lit * 0.6; Art.crystal(ctx, c.x, c.y, sc, '#ffffff'); ctx.restore(); }
     }
-    Art.dragon(ctx, 640, 715, 0.42, { t, level: S.data.level, happy: this.dr.happy > 0, blink: (t % 3.1 < 0.13) ? 1 : 0 });
+    Art.dragon(ctx, 640, 715, 0.42, { t, happy: this.dr.happy > 0, blink: (t % 3.1 < 0.13) ? 1 : 0 });
     // прогресс песенки
     const n = this.target;
     for (let i = 0; i < n; i++) {

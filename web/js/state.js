@@ -1,52 +1,91 @@
-// Сохранение игры, уровни дракончика, озвучка
+// Сохранение игры: общие настройки + прогресс на каждой планете
 'use strict';
 const KEY = 'cosmodragon.save.v1';
 const S = {
   data: null,
-  defaults: {
-    treats: 5, level: 1, fed: 0, name: 'Дракоша', introSeen: false,
-    puzzle: 0, route: 0, match: 0, treasure: 0, catch: 0, memory: 0, simon: 0, stars: 0, bunny: 0, best: {}, music: true, voice: true, beacon: false,
+  planetDefaults() { return { treats: 0, level: 0, fed: 0, beacon: false, games: {}, keys: 0, serpent: 'none', visited: false }; },
+  defaults() {
+    return {
+      v: 2, planet: 'nyam', unlocked: ['nyam'], planets: {},
+      music: true, voice: true, introSeen: false, diff: 4,
+      stats: {}, ach: {}, newAch: [],
+    };
   },
   load() {
     let d = {};
     try { d = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { d = {}; }
-    this.data = Object.assign({}, this.defaults, d);
+    if (!d.v) d = this.migrate(d);
+    this.data = Object.assign(this.defaults(), d);
+    for (const p of PLANETS) {
+      this.data.planets[p.id] = Object.assign(this.planetDefaults(), p.id === 'nyam' ? { level: 1, treats: 5 } : {}, this.data.planets[p.id] || {});
+    }
+  },
+  // Перенос старого сохранения (версия 1) на планету Ням-Ням
+  migrate(o) {
+    if (!o || !Object.keys(o).length) return {};
+    const d = this.defaults();
+    d.music = o.music !== false; d.voice = o.voice !== false; d.introSeen = !!o.introSeen;
+    d.planets.nyam = Object.assign(this.planetDefaults(), {
+      treats: o.treats || 0, level: Math.max(1, o.level || 1), fed: o.fed || 0, beacon: !!o.beacon, visited: true,
+      games: { treasure: o.treasure || 0, puzzle: o.puzzle || 0, match3: o.match || 0, route: o.route || 0, catch: o.catch || 0,
+        memory: o.memory || 0, simon: o.simon || 0, stars: o.stars || 0, bunny: o.bunny || 0 },
+    });
+    if (d.planets.nyam.beacon) d.unlocked.push('water');
+    return d;
   },
   save() { try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { } },
-  addTreats(n) { this.data.treats += n; this.save(); },
+  addTreats(n) { PS().treats += n; if (n > 0) stat('treats', n); this.save(); },
 };
-S.load();
 
-// Рост дракончика. need — сколько вкусняшек скормить на этом уровне, чтобы вырасти.
-// skill — умение, которое открывается на этом уровне; оно помогает в играх.
+// Текущая планета (описание) и её сохранение
+function P() { return PLANET_BY_ID[S.data.planet] || PLANETS[0]; }
+function PS(id) { return S.data.planets[id || S.data.planet]; }
+// Уровень сложности игры: число побед + сложность из настроек + номер планеты
+function GL(key) { return (PS().games[key] || 0) + S.data.diff + P().order; }
+function GW(key) {
+  const ps = PS(), g = ps.games; g[key] = (g[key] || 0) + 1;
+  // в Джунглях, пока Листик похищен, каждая победа приносит ключ
+  if (P().special === 'serpent' && ps.serpent === 'kidnapped' && ps.keys < 3) {
+    ps.keys++;
+    if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + ps.keys + ' из 3', 'key'), 1600);
+  }
+  stat('wins', 1); S.save();
+}
+function stat(k, n) {
+  const st = S.data.stats; st[k] = (st[k] || 0) + (n == null ? 1 : n);
+  if (typeof Ach !== 'undefined') Ach.check();
+}
+
+// Рост дракона. Уровень 0 — яйцо. need — сколько вкусняшек нужно на этом уровне.
 const LEVELS = [
-  null,
+  { need: 8, title: 'Яйцо' },
   { need: 10, title: 'Малыш' },
   { need: 15, title: 'Крылышки', skill: 'wings', icon: 'wing', short: 'Летает и ставит щит ракете в «Маршрутах»',
-    ability: 'Ура! У Дракоши выросли крылышки! Теперь он умеет летать и защищает ракету щитом от метеоритов.' },
+    ability: 'У дракончика выросли крылышки! Теперь он умеет летать и защищает ракету щитом.' },
   { need: 22, title: 'Сияние', skill: 'glow', icon: 'glow', short: 'Подсказывает, где сундук, в «Сокровищах»',
-    ability: 'Ура! Дракоша научился светиться! Теперь он подсказывает, где спрятан сундук.' },
+    ability: 'Дракончик научился светиться! Теперь он подсказывает, где спрятан сундук, и освещает лабиринт.' },
   { need: 30, title: 'Огонёк', skill: 'fire', icon: 'fire', short: 'Сжигает целый ряд в «Три в ряд»',
-    ability: 'Ура! В Дракоше зажёгся огонёк! Теперь он умеет сжигать целый ряд вкусняшек.' },
-  { need: 40, title: 'Быстрые лапки', skill: 'paws', icon: 'paw', short: 'Быстрее бегает и шире ловит в «Лови вкусняшки»',
-    ability: 'Ура! У Дракоши быстрые лапки! Теперь он быстрее бегает и ловит больше вкусняшек.' },
+    ability: 'В дракончике зажёгся огонёк! Теперь он умеет сжигать целый ряд вкусняшек.' },
+  { need: 40, title: 'Быстрые лапки', skill: 'paws', icon: 'paw', short: 'Быстрее бегает и шире ловит',
+    ability: 'У дракончика быстрые лапки! Теперь он быстрее бегает и ловит больше вкусняшек.' },
   { need: 50, title: 'Хвостик-магнит', skill: 'magnet', icon: 'magnet', short: 'Притягивает вкусняшки и звёздочки',
-    ability: 'Ура! Звёздочка на хвосте стала магнитом! Теперь Дракоша притягивает вкусняшки и звёздочки.' },
+    ability: 'Хвостик стал магнитом! Теперь дракончик притягивает вкусняшки и звёздочки.' },
   { need: 60, title: 'Зоркие глазки', skill: 'eyes', icon: 'eye', short: 'Показывает все карточки в «Найди пару»',
-    ability: 'Ура! У Дракоши зоркие глазки! В игре «Найди пару» он на секунду покажет все карточки.' },
-  { need: 70, title: 'Двойной щит', skill: 'shield2', icon: 'shield', short: 'Два щита для ракеты в «Маршрутах»',
-    ability: 'Ура! Дракоша стал сильнее! Теперь он ставит ракете два щита.' },
+    ability: 'У дракончика зоркие глазки! Он подсказывает в играх на внимание.' },
+  { need: 70, title: 'Двойной щит', skill: 'shield2', icon: 'shield', short: 'Два щита в полётах',
+    ability: 'Дракончик стал сильнее! Теперь он ставит два щита.' },
   { need: 85, title: 'Большой огонь', skill: 'bigfire', icon: 'bigfire', short: 'Огонь крест-накрест два раза в «Три в ряд»',
-    ability: 'Ура! Огонь Дракоши стал большим! Теперь он сжигает вкусняшки крест-накрест, и два раза.' },
-  { need: 0, title: 'Звёздный дракон', skill: 'star', icon: 'star', short: 'Зажигает Звёздный маяк',
-    ability: 'Ура! Дракоша стал настоящим Звёздным драконом! Теперь он может зажечь Звёздный маяк!' },
+    ability: 'Огонь дракончика стал большим! Теперь он сжигает вкусняшки крест-накрест, и два раза.' },
+  { need: 0, title: 'Звёздный дракон', skill: 'star', icon: 'star', short: 'Зажигает маяк планеты',
+    ability: 'Дракончик стал настоящим Звёздным драконом! Теперь он может зажечь маяк!' },
 ];
 const MAX_LEVEL = 10;
 const SKILL_LEVEL = {};
-LEVELS.forEach((l, i) => { if (l && l.skill) SKILL_LEVEL[l.skill] = i; });
+LEVELS.forEach((l, i) => { if (l.skill) SKILL_LEVEL[l.skill] = i; });
+function levelNeed(lvl) { return Math.round(LEVELS[lvl].need * P().mult); }
 function hasAbility(name) {
   if (name === 'big') name = 'star';
-  return SKILL_LEVEL[name] != null && S.data.level >= SKILL_LEVEL[name];
+  return SKILL_LEVEL[name] != null && PS().level >= SKILL_LEVEL[name];
 }
 
 // Озвучка текста (Android TTS через мост, иначе браузерная)

@@ -118,6 +118,21 @@ const G = {
       });
     }
   };
+  // всплывающее сообщение сверху (достижения, ключи и т.п.)
+  G.toasts = [];
+  G.toast = function (text, icon) { G.toasts.push({ text, icon: icon || 'trophy', age: 0, life: 3.2 }); };
+  function drawToasts(ctx, dt) {
+    const tt = G.toasts[0]; if (!tt) return;
+    tt.age += dt;
+    if (tt.age > tt.life) { G.toasts.shift(); return; }
+    const k = Math.min(1, tt.age / 0.35, (tt.life - tt.age) / 0.35);
+    ctx.save(); ctx.translate(640, -60 + k * 170);
+    ctx.font = 'bold 30px ' + UI.font; const w = Math.max(420, ctx.measureText(tt.text).width + 140);
+    Art.rr(ctx, -w / 2, -40, w, 80, 40); ctx.fillStyle = 'rgba(255,250,235,0.97)'; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#ffd23f'; ctx.stroke();
+    Art.ell(ctx, -w / 2 + 44, 0, 30, 30, '#8f6cf2'); Art.icon(ctx, tt.icon, -w / 2 + 44, 0, 0.75, G.t);
+    UI.text(ctx, tt.text, 30, 2, 30, '#5a3fa0', 'center', false);
+    ctx.restore();
+  }
   G.floatText = function (x, y, text, color) {
     G.floaters.push({ x, y, text, color: color || '#fff', age: 0, life: 1.4 });
   };
@@ -181,6 +196,7 @@ const G = {
       s.drawTop && s.drawTop(ctx);
     }
     drawParticles(ctx, dt);
+    drawToasts(ctx, dt);
     if (G.fade > 0) {
       ctx.fillStyle = 'rgba(27,18,64,' + G.fade + ')';
       const v = G.view; ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);

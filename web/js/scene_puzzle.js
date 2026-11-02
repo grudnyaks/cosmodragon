@@ -3,70 +3,26 @@
 const PW = 640, PH = 440; // размер картинки
 const BW = 560, BH = 385; // размер поля
 const PUZZLE_PICS = [
-  // 0: Дракоша на планете
-  (c, t) => {
-    let g = c.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, '#3a2a9e'); g.addColorStop(1, '#ff9ad5');
-    c.fillStyle = g; c.fillRect(0, 0, PW, PH);
-    Art.planet(c, 110, 90, 50, '#ffd0f0', '#ff7eb6', 'rgba(255,240,180,0.8)');
-    c.fillStyle = '#62d8c4'; c.beginPath(); c.ellipse(320, 470, 460, 120, 0, 0, 7); c.fill();
-    Art.mushroom(c, 80, 400, 0.7, '#7ee8ff', 0); Art.bush(c, 560, 390, 0.8, '#ffb23a', 0);
-    Art.dragon(c, 330, 410, 1.2, { t: 0.4, level: 3, happy: true });
-  },
-  // 1: Ракета в космосе
-  (c) => {
-    c.fillStyle = '#140c44'; c.fillRect(0, 0, PW, PH);
-    const r = Art.seeded(3); c.fillStyle = '#fff';
-    for (let i = 0; i < 80; i++) { c.beginPath(); c.arc(r() * PW, r() * PH, r() * 2.5 + 0.5, 0, 7); c.fill(); }
-    Art.planet(c, 520, 340, 90, '#9ff0e0', '#2a8f8a', 'rgba(255,180,230,0.8)');
-    Art.planet(c, 100, 80, 34, '#ffe0a0', '#ff8a2a');
-    Art.rocket(c, 280, 330, 0.62, { t: 0.2, flame: 1, rot: 0.5, pilot: true });
-  },
-  // 2: Друзья
-  (c) => {
-    let g = c.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, '#6a40b8'); g.addColorStop(1, '#ffb3d9');
-    c.fillStyle = g; c.fillRect(0, 0, PW, PH);
-    c.fillStyle = '#3fb8a9'; c.fillRect(0, 360, PW, 80);
-    for (let i = 0; i < 6; i++) Art.heart(c, 60 + i * 105, 60 + (i % 2) * 40, 40, ['#ff5e9a', '#ffd23f', '#7ee8ff'][i % 3]);
-    Art.astronaut(c, 200, 400, 1.6, { t: 0.3, wave: true });
-    Art.dragon(c, 430, 400, 1.05, { t: 0.5, level: 2, happy: true, look: -1 });
-  },
-  // 3: Звёздный маяк
-  (c) => {
-    let g = c.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, '#1a1050'); g.addColorStop(1, '#8a5ad8');
-    c.fillStyle = g; c.fillRect(0, 0, PW, PH);
-    const r = Art.seeded(9); c.fillStyle = '#fff';
-    for (let i = 0; i < 60; i++) { c.beginPath(); c.arc(r() * PW, r() * PH * 0.7, r() * 2 + 0.5, 0, 7); c.fill(); }
-    c.fillStyle = '#62d8c4'; c.beginPath(); c.ellipse(420, 480, 330, 150, 0, 0, 7); c.fill();
-    Art.beacon(c, 420, 360, 1.3, true, 0.6);
-    Art.crystal(c, 120, 430, 0.9, '#ff9be0'); Art.bush(c, 600, 430, 0.7, '#ff7eb6', 0);
-  },
-  // 4: Праздник вкусняшек
-  (c) => {
-    c.fillStyle = '#ffe6f3'; c.fillRect(0, 0, PW, PH);
-    for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#ffd0e8' : '#fff3c0'; c.beginPath(); c.moveTo(320, 220); c.arc(320, 220, 600, i * Math.PI / 4, (i + 1) * Math.PI / 4); c.fill(); }
-    for (let i = 0; i < 5; i++) Art.treat(c, i, 90 + i * 115, 360, 1.2, 0);
-    Art.treat(c, 0, 320, 160, 2.6, 0);
-  },
-  // 5: Дракоша летит
-  (c) => {
-    let g = c.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, '#2a2386'); g.addColorStop(1, '#ffb3d9');
-    c.fillStyle = g; c.fillRect(0, 0, PW, PH);
-    Art.planet(c, 520, 100, 60, '#d4fff6', '#38d6c3');
-    for (let i = 0; i < 5; i++) { c.fillStyle = 'rgba(255,255,255,0.8)'; c.beginPath(); c.ellipse(80 + i * 130, 380 + (i % 2) * 30, 70, 26, 0, 0, 7); c.fill(); }
-    Art.dragon(c, 300, 380, 1.0, { t: 0.1, level: 5, flap: -0.4, happy: true });
-  },
+  // в мировых координатах: видна область примерно 0..1047 по x и 0..720 по y
+  (c, t) => { World.bg(c, 2, { noBeacon: true }); Art.dragon(c, 520, 640, 1.5, { t: 0.4, level: Math.max(3, PS().level), happy: true }); },
+  (c, t) => { Art.sky(c, '#06042a', '#1a1060', '#3a2a90'); Art.stars(c, 5, 160, 1); Art.planet(c, 820, 560, 160, '#9ff0e0', '#2a8f8a', 'rgba(255,180,230,0.8)'); Art.planet(c, 160, 120, 50, '#ffe0a0', '#ff8a2a'); Art.rocket(c, 470, 560, 0.95, { t: 0.2, flame: 1, rot: 0.6, pilot: true }); },
+  (c, t) => { World.bg(c, 3, { noBeacon: true }); Art.astronaut(c, 330, 640, 2, { t: 0.3, anim: 'wave', at: 0.2 }); Art.dragon(c, 680, 640, 1.25, { t: 0.5, level: Math.max(2, PS().level), happy: true, look: -1 }); },
+  (c, t) => { World.bg(c, 4, { noBeacon: true }); Art.beacon(c, 600, 620, 2.4, true, 0.6); Art.dragon(c, 260, 650, 0.9, { t: 0.2, level: Math.max(2, PS().level), look: 1 }); },
+  (c, t) => { const pd = P(); Art.sky(c, pd.sky[0], pd.sky[1], pd.sky[2]); World.rays(c, 520, 300, 1, '#ffffff');
+    for (let i = 0; i < 5; i++) Art.treat(c, i, 130 + i * 190, 600, 1.9, 0); Art.treat(c, 5, 520, 280, 3.6, 0); },
+  (c, t) => { World.bg(c, 5, { noBeacon: true, noDecor: true }); Art.dragon(c, 520, 600, 1.2, { t: 0.1, level: Math.max(6, PS().level), flap: -0.35, happy: true, lift: 140 }); },
 ];
 
 G.scenes.puzzle = {
   enter() {
-    const idx = S.data.puzzle;
-    this.pic = idx % PUZZLE_PICS.length;
+    const idx = GL('puzzle');
+    this.pic = ((PS().games.puzzle || 0) + P().order) % PUZZLE_PICS.length;
     const sizes = [[3, 2], [3, 3], [3, 3], [4, 3], [4, 3], [4, 4]];
     this.ghost = Math.max(0.07, 0.2 - idx * 0.025);
     [this.cols, this.rows] = sizes[Math.min(idx, sizes.length - 1)];
     this.img = document.createElement('canvas'); this.img.width = PW; this.img.height = PH;
     const c = this.img.getContext('2d');
-    PUZZLE_PICS[this.pic](c, 0);
+    World.paintTo(c, PW, PH, cc => PUZZLE_PICS[this.pic](cc, 0));
     this.bx = 60; this.by = 200;
     const pw = BW / this.cols, ph = BH / this.rows;
     this.pieces = [];
@@ -112,7 +68,7 @@ G.scenes.puzzle = {
   },
   win() {
     this.won = true; this.winT = G.t;
-    S.data.puzzle++; S.save();
+    GW('puzzle');
     Sound.win();
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(this.bx + BW / 2 + M.rnd(-200, 200), this.by + M.rnd(0, 200), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
     UI.reward(3 + Math.floor(this.pieces.length / 3), this.bx + BW / 2, this.by + BH / 2);
@@ -121,8 +77,7 @@ G.scenes.puzzle = {
   },
   draw(ctx) {
     const t = G.t;
-    Art.sky(ctx, '#2b1a6e', '#6a40b8', '#a05ad0');
-    Art.stars(ctx, 21, 70, t);
+    World.calm(ctx, t);
     // рамка
     Art.rr(ctx, this.bx - 18, this.by - 18, BW + 36, BH + 36, 26); ctx.fillStyle = '#ffd6f0'; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#2a1650'; ctx.stroke();
     ctx.save(); ctx.globalAlpha = this.won ? 1 : this.ghost; ctx.drawImage(this.img, this.bx, this.by, BW, BH); ctx.restore();
@@ -136,7 +91,7 @@ G.scenes.puzzle = {
     } else {
       const k = Math.min(1, (G.t - this.winT) / 0.6);
       ctx.save(); ctx.globalAlpha = 1 - k; ctx.fillStyle = '#fff'; ctx.fillRect(this.bx, this.by, BW, BH); ctx.restore();
-      Art.dragon(ctx, 1000, 690, 0.6, { t, level: S.data.level, happy: true, look: -1 });
+      Art.dragon(ctx, 1000, 690, 0.6, { t, happy: true, look: -1 });
     }
   },
   drawPiece(ctx, p) {

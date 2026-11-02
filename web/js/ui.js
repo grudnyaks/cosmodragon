@@ -99,7 +99,7 @@ const UI = {
   reset() { UI.pending = 0; G.flying = []; },
   drawCounterTopRight(ctx) {
     UI.counterBump = Math.max(0, UI.counterBump - G.dt * 4);
-    UI.counter(ctx, G.view.x1 - 190, 60, S.data.treats - UI.pending, UI.counterBump);
+    UI.counter(ctx, G.view.x1 - 190, 60, PS().treats - UI.pending, UI.counterBump);
     UI.drawFlying(ctx);
   },
 };

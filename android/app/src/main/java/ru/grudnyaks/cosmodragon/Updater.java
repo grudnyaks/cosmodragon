@@ -40,6 +40,12 @@ public class Updater {
     static final String PREFS = "updater";
 
     final MainActivity act;
+    final java.util.concurrent.atomic.AtomicBoolean running = new java.util.concurrent.atomic.AtomicBoolean(false);
+    volatile long lastCheck = 0;
+    volatile String lastError = "";
+    volatile String lastResult = "ещё не проверялось";
+    volatile int remoteWeb = 0, remoteApk = 0;
+    long apkAskedAt = 0;
 
     Updater(MainActivity act) {
         this.act = act;
@@ -74,21 +80,51 @@ public class Updater {
         return downloadedWebVersion(c) > bundledWebVersion(c) && new File(webDir(c), "index.html").isFile();
     }
 
-    void checkAsync() {
+    /** Проверка не чаще раза в 3 минуты (вызывается при запуске и при каждом возвращении в игру). */
+    void checkAsync(boolean force) {
+        long now = System.currentTimeMillis();
+        if (!force && now - lastCheck < 3 * 60 * 1000) return;
+        if (!running.compareAndSet(false, true)) return;
+        lastCheck = now;
         new Thread(() -> {
             try {
                 check();
+                lastError = "";
             } catch (Exception e) {
                 Log.w(TAG, "update check failed", e);
+                lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
+                lastResult = "ошибка проверки";
+            } finally {
+                running.set(false);
             }
         }, "updater").start();
+    }
+
+    /** Сведения для экрана настроек в игре. */
+    String infoJson() {
+        try {
+            JSONObject j = new JSONObject();
+            j.put("apk", BuildConfig.VERSION_CODE);
+            j.put("apkName", BuildConfig.VERSION_NAME);
+            j.put("webBundled", bundledWebVersion(act));
+            j.put("webDownloaded", downloadedWebVersion(act));
+            j.put("webActive", useDownloaded(act) ? downloadedWebVersion(act) : bundledWebVersion(act));
+            j.put("remoteWeb", remoteWeb);
+            j.put("remoteApk", remoteApk);
+            j.put("lastCheck", lastCheck);
+            j.put("result", lastResult);
+            j.put("error", lastError);
+            return j.toString();
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     void check() throws Exception {
         String body = new String(httpGet(BASE + "version.json"), StandardCharsets.UTF_8);
         JSONObject j = new JSONObject(body);
-        int remoteWeb = j.optInt("web", 0);
-        int remoteApk = j.optInt("apk", 0);
+        remoteWeb = j.optInt("web", 0);
+        remoteApk = j.optInt("apk", 0);
         int minApk = j.optInt("minApk", 0);
         String apkUrl = j.optString("apkUrl", BASE + "cosmodragon.apk");
 
@@ -97,7 +133,13 @@ public class Updater {
         }
         int current = Math.max(bundledWebVersion(act), downloadedWebVersion(act));
         if (remoteWeb > current && BuildConfig.VERSION_CODE >= minApk) {
+            lastResult = "скачиваю игру " + remoteWeb;
             downloadWeb(remoteWeb);
+            lastResult = "игра обновлена до " + remoteWeb;
+        } else if (remoteWeb > current) {
+            lastResult = "игре " + remoteWeb + " нужен новый APK";
+        } else {
+            lastResult = "последняя версия";
         }
     }
 
@@ -123,6 +165,9 @@ public class Updater {
     // ---------- Обновление APK ----------
     void askApkUpdate(String url) {
         if (act.isFinishing()) return;
+        long now = System.currentTimeMillis();
+        if (now - apkAskedAt < 30 * 60 * 1000) return;
+        apkAskedAt = now;
         new AlertDialog.Builder(act)
                 .setTitle("Новая версия Космодракона")
                 .setMessage("Доступна новая версия приложения. Скачать и установить?")

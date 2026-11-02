@@ -21,8 +21,8 @@ const CONSTELLATIONS = (function () {
 
 G.scenes.stars = {
   enter() {
-    const lvl = S.data.stars;
-    this.shape = lvl < CONSTELLATIONS.length ? CONSTELLATIONS[lvl] : M.pick(CONSTELLATIONS);
+    const lvl = GL('stars'), wins = PS().games.stars || 0;
+    this.shape = CONSTELLATIONS[(wins + P().order * 2 + Math.min(S.data.diff, 4)) % CONSTELLATIONS.length];
     const cx = 640, cy = 395, sc = 265;
     this.pts = this.shape.pts.map((p, i) => ({ x: cx + p[0] * sc * 1.15, y: cy + p[1] * sc, n: i + 1, done: false, wig: 0 }));
     this.fakes = [];
@@ -55,7 +55,7 @@ G.scenes.stars = {
   },
   win() {
     this.won = true; this.wonT = G.t;
-    S.data.stars++; S.save();
+    GW('stars');
     G.wait(0.6, () => {
       Sound.win();
       Voice.say('Ура! Это ' + this.shape.name + '!');
@@ -67,8 +67,7 @@ G.scenes.stars = {
   update(dt) { this.idle += dt; },
   draw(ctx) {
     const t = G.t;
-    Art.sky(ctx, '#070420', '#181050', '#2a1a6e');
-    Art.stars(ctx, 81, 200, t);
+    World.space(ctx, t, true);
     // линии
     const done = this.pts.filter(p => p.done);
     if (done.length > 1 || this.won) {
@@ -101,7 +100,7 @@ G.scenes.stars = {
     if (this.won) {
       const k = Math.min(1, (t - this.wonT) / 0.8);
       ctx.save(); ctx.globalAlpha = k; UI.text(ctx, this.shape.name[0].toUpperCase() + this.shape.name.slice(1) + '!', 640, 70, 54, '#ffd23f', 'center', true); ctx.restore();
-      Art.dragon(ctx, 160, 700, 0.5, { t, level: S.data.level, happy: true, look: 1 });
+      Art.dragon(ctx, 160, 700, 0.5, { t, happy: true, look: 1 });
     }
   },
   drawTop(ctx) { UI.drawCounterTopRight(ctx); },

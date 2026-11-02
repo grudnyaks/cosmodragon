@@ -9,25 +9,24 @@ G.scenes.skills = {
     }
     this.cards.forEach((c, i) => G.tween(c, { pop: 1 }, 0.35, G.ease.outBack, null, i * 0.05));
     UI.homeButton(this);
-    const have = this.cards.filter(c => S.data.level >= c.lvl).length;
-    Voice.say(have ? 'Это умения Дракоши. Нажми на умение, чтобы узнать, что оно делает.' : 'Корми Дракошу, и у него появятся умения!');
+    const have = this.cards.filter(c => PS().level >= c.lvl).length;
+    Voice.say(have ? 'Это умения дракончика. Нажми на умение, чтобы узнать, что оно делает.' : 'Корми дракончика, и у него появятся умения!');
   },
   down(x, y) {
     for (const c of this.cards) {
       if (Math.abs(x - c.x) < 165 && Math.abs(y - c.y) < 72) {
         c.pop = 0.85; G.tween(c, { pop: 1 }, 0.4, G.ease.outElastic);
         const L = LEVELS[c.lvl];
-        if (S.data.level >= c.lvl) { Sound.chime(); Voice.say(L.title + '. ' + L.short + '.'); }
-        else { Sound.boing(); Voice.say(L.title + '. Откроется, когда Дракоша вырастет до уровня ' + c.lvl + '.'); }
+        if (PS().level >= c.lvl) { Sound.chime(); Voice.say(L.title + '. ' + L.short + '.'); }
+        else { Sound.boing(); Voice.say(L.title + '. Откроется, когда дракончик вырастет до уровня ' + c.lvl + '.'); }
         return;
       }
     }
   },
   draw(ctx) {
     const t = G.t, d = S.data;
-    Art.sky(ctx, '#22175e', '#4a2a90', '#8a5ad8');
-    Art.stars(ctx, 61, 90, t);
-    UI.text(ctx, 'Умения Дракоши', 640, 66, 46, '#ffd6f0', 'center', true);
+    World.calm(ctx, t, 0.45);
+    UI.text(ctx, 'Умения: ' + P().dragon.name, 640, 66, 46, '#ffd6f0', 'center', true);
     for (const c of this.cards) {
       const L = LEVELS[c.lvl], open = d.level >= c.lvl;
       ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.pop, c.pop);

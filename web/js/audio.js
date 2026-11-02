@@ -24,29 +24,32 @@ const Sound = (function () {
     for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } // коричневый шум
   }
 
-  // Записанное урчание (sounds/purr1..4.mp3); пока не загрузилось — синтезированное
-  const purrBufs = [];
-  let purrLoading = false, lastPurr = -1, purrUntil = 0;
-  function loadPurrs() {
-    if (purrLoading || !ac) return; purrLoading = true;
+  // Записанное урчание: у каждой планеты свой голос (sounds/<планета>/purrN.mp3), у Ням-Ням — исходная запись
+  const purrBufs = {}, purrLoading = {};
+  let lastPurr = -1, purrUntil = 0;
+  function voiceDir(pid) { const v = (PLANET_BY_ID[pid] || PLANETS[0]).voice; return v === 'nyam' ? 'sounds/' : 'sounds/' + v + '/'; }
+  function loadPurrs(pid) {
+    pid = pid || S.data.planet;
+    if (purrLoading[pid] || !ac) return; purrLoading[pid] = true;
+    purrBufs[pid] = [];
     for (let i = 1; i <= 4; i++) {
-      fetch('sounds/purr' + i + '.mp3').then(r => r.arrayBuffer())
+      fetch(voiceDir(pid) + 'purr' + i + '.mp3').then(r => r.arrayBuffer())
         .then(b => new Promise((ok, bad) => ac.decodeAudioData(b, ok, bad)))
-        .then(buf => purrBufs.push(buf)).catch(() => { });
+        .then(buf => purrBufs[pid].push(buf)).catch(() => { });
     }
   }
-  function playPurrSample(t, rate) {
-    let i; do { i = (Math.random() * purrBufs.length) | 0; } while (purrBufs.length > 1 && i === lastPurr);
+  function playPurrSample(list, t, rate, gain) {
+    let i; do { i = (Math.random() * list.length) | 0; } while (list.length > 1 && i === lastPurr);
     lastPurr = i;
-    const src = ac.createBufferSource(); src.buffer = purrBufs[i]; src.playbackRate.value = rate;
-    const g = ac.createGain(); g.gain.value = 1.0;
+    const src = ac.createBufferSource(); src.buffer = list[i]; src.playbackRate.value = rate;
+    const g = ac.createGain(); g.gain.value = gain == null ? 1 : gain;
     src.connect(g); g.connect(sfxGain); src.start(t);
-    return purrBufs[i].duration / rate;
+    return list[i].duration / rate;
   }
 
   function unlock() {
     init(); if (!ac) return;
-    loadPurrs();
+    loadPurrs(S.data.planet);
     if (ac.state === 'suspended') ac.resume();
     if (S.data.music && !musicOn) startMusic();
   }
@@ -132,19 +135,43 @@ const Sound = (function () {
     pause() { if (ac && ac.state === 'running') ac.suspend(); Voice.stop(); },
     resume() { if (ac && ac.state === 'suspended') ac.resume(); },
     // Урчание дракончика: записанные «мур-р», чем больше дракончик — тем ниже голос
-    purr(len) {
+    purr(len, opt) {
       if (!ok()) return;
-      if (purrBufs.length) {
+      opt = opt || {};
+      const pid = opt.planet || S.data.planet;
+      loadPurrs(pid);
+      const list = purrBufs[pid];
+      if (list && list.length) {
         const now = ac.currentTime;
         if (now < purrUntil - 0.3) return; // не накладываем урчание на урчание
-        const lvl = (S.data && S.data.level) || 1, rate = 1.1 - (lvl - 1) * 0.06;
-        let t = now, total = len || 1.6;
-        do { t += playPurrSample(t, rate * (0.97 + Math.random() * 0.06)) - 0.05; } while (t - now < total * 0.8);
+        const lvl = Math.max(1, (S.data.planets[pid] || {}).level || 1), rate = (opt.rate || 1) * (1.1 - (lvl - 1) * 0.04);
+        let t = now; const total = len || 1.6;
+        do { t += playPurrSample(list, t, rate * (0.97 + Math.random() * 0.06), opt.gain) - 0.05; } while (t - now < total * 0.8);
         purrUntil = t;
         return;
       }
       this.purrSynth(len);
     },
+    preload(pid) { if (ok()) loadPurrs(pid); },
+    // хихиканье злого воришки
+    giggle() {
+      if (!ok()) return; const t0 = ac.currentTime;
+      for (let i = 0; i < 6; i++) {
+        const t = t0 + i * 0.13, f = 980 - i * 40 + Math.random() * 40;
+        const o = ac.createOscillator(), g = ac.createGain(), bp = ac.createBiquadFilter();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.1);
+        bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 3;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+        o.connect(bp); bp.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + 0.13);
+        noise(t, 0.06, 'highpass', 3000, 2000, 0.12);
+      }
+    },
+    // шипение змея
+    hiss() { if (!ok()) return; noise(ac.currentTime, 1.1, 'highpass', 3500, 5000, 0.5, 0.7); },
+    // писк бортового компьютера
+    beep() { if (!ok()) return; const t = ac.currentTime; tone(1568, t, 0.09, 'square', 0.06); tone(2093, t + 0.12, 0.09, 'square', 0.06); tone(1760, t + 0.24, 0.15, 'square', 0.06); },
+    magic() { if (!ok()) return; const t = ac.currentTime; for (let i = 0; i < 12; i++) tone(mf(72 + [0, 4, 7, 11, 12, 16, 19, 23, 24, 28, 31, 36][i]), t + i * 0.07, 0.5, 'sine', 0.08); },
+    rumble(d) { if (!ok()) return; noise(ac.currentTime, d || 2, 'lowpass', 300, 80, 0.8, 1); },
     // Запасной синтезированный вариант: низкий шум с пульсацией ~24 Гц
     purrSynth(len) {
       if (!ok()) return; const t = ac.currentTime, dur = len || 1.6;

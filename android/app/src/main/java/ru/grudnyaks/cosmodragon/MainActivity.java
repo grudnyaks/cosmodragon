@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
         web.loadUrl(START_URL);
 
         updater = new Updater(this);
-        updater.checkAsync();
+        updater.checkAsync(true);
     }
 
     /** Отдаёт файл игры: сначала из скачанного обновления, иначе из APK. */
@@ -167,6 +167,16 @@ public class MainActivity extends Activity {
         public int apkVersion() {
             return BuildConfig.VERSION_CODE;
         }
+
+        @JavascriptInterface
+        public String updateInfo() {
+            return updater != null ? updater.infoJson() : "{}";
+        }
+
+        @JavascriptInterface
+        public void checkUpdates() {
+            if (updater != null) updater.checkAsync(true);
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -204,6 +214,7 @@ public class MainActivity extends Activity {
             web.evaluateJavascript("window.onAppResume && window.onAppResume()", null);
         }
         hideSystemUi();
+        if (updater != null) updater.checkAsync(false);
     }
 
     @SuppressWarnings("deprecation")

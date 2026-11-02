@@ -1,26 +1,26 @@
 // Найди пару: переворачивай карточки и находи одинаковые картинки
 'use strict';
 const MEMORY_FACES = [
-  (ctx, t) => Art.dragon(ctx, 0, 70, 0.48, { t, level: S.data.level, happy: true }),
+  (ctx, t) => Art.dragon(ctx, 0, 70, 0.48, { t, happy: true }),
   (ctx, t) => Art.astronaut(ctx, 0, 68, 0.85, { t }),
   (ctx, t) => Art.rocket(ctx, 0, 78, 0.33, { t }),
   (ctx) => Art.planet(ctx, 0, 0, 38, '#ffd0f0', '#ff7eb6', 'rgba(255,240,180,0.9)'),
   (ctx, t) => Art.treat(ctx, 0, 0, 6, 1.2, t),
   (ctx, t) => Art.treat(ctx, 4, 0, -4, 1.1, t),
   (ctx) => Art.beacon(ctx, 0, 70, 0.75, true, 0),
-  (ctx) => Art.meteor(ctx, 0, 0, 40, 0.3, 11),
+  (ctx, t) => Art.obstacle(ctx, null, 0, 0, 40, 0.3, t, 11),
   (ctx, t) => Art.treat(ctx, 1, 0, 0, 1.2, t),
   (ctx, t) => Art.treat(ctx, 2, 0, 0, 1.1, t),
   (ctx, t) => Art.treat(ctx, 3, 0, 0, 1.2, t),
   (ctx, t) => Art.treat(ctx, 5, 0, 4, 1.3, t),
-  (ctx, t) => Art.bunny(ctx, 0, 60, 0.62, t, 0),
+  (ctx, t) => Art.critter(ctx, null, 0, 60, 0.62, t, 0),
   (ctx) => Art.chest(ctx, 0, 34, 0.9, false, 0),
 ];
 
 G.scenes.memory = {
   enter() {
-    const lvl = S.data.memory;
-    const pairs = lvl < 2 ? 4 : lvl < 4 ? 6 : 8;
+    const lvl = GL('memory');
+    const pairs = lvl < 3 ? 4 : lvl < 6 ? 6 : 8;
     const cols = 4, rows = pairs * 2 / cols;
     const faces = M.shuffle([...MEMORY_FACES.keys()]).slice(0, pairs);
     const deck = M.shuffle(faces.concat(faces));
@@ -36,7 +36,7 @@ G.scenes.memory = {
     this.flipped = []; this.lock = false; this.won = false; this.misses = 0;
     if (hasAbility('eyes')) { // Зоркие глазки: показать все карточки
       this.lock = true;
-      G.wait(0.8, () => { this.cards.forEach(c => G.tween(c, { open: 1 }, 0.3)); Voice.say('Дракоша показывает карточки. Запоминай!'); });
+      G.wait(0.8, () => { this.cards.forEach(c => G.tween(c, { open: 1 }, 0.3)); Voice.say(P().dragon.name + ' показывает карточки. Запоминай!'); });
       G.wait(2.9, () => { this.cards.forEach(c => G.tween(c, { open: 0 }, 0.3)); });
       G.wait(3.3, () => { this.lock = false; });
     }
@@ -77,7 +77,7 @@ G.scenes.memory = {
   },
   win() {
     this.won = true;
-    S.data.memory++; S.save();
+    GW('memory');
     Sound.win(); Sound.purr(1.6);
     UI.reward(5, 640, 400);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
@@ -86,10 +86,9 @@ G.scenes.memory = {
   },
   draw(ctx) {
     const t = G.t;
-    Art.sky(ctx, '#2b1a6e', '#6a40b8', '#ff9ad5');
-    Art.stars(ctx, 51, 70, t);
+    World.calm(ctx, t);
     if (this.won) {
-      Art.dragon(ctx, 640, 700, 0.75, { t, level: S.data.level, happy: true });
+      Art.dragon(ctx, 640, 700, 0.75, { t, happy: true });
       return;
     }
     for (const c of this.cards) this.drawCard(ctx, c, t);

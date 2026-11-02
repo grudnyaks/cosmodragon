@@ -2,7 +2,7 @@
 'use strict';
 G.scenes.treasure = {
   enter() {
-    const round = S.data.treasure;
+    const round = GL('treasure');
     const LAYOUTS = {
       8: [[170, 470], [400, 450], [640, 470], [880, 450], [280, 640], [520, 650], [760, 640], [1000, 630]],
       10: [[150, 450], [370, 440], [590, 455], [810, 440], [1010, 450], [150, 645], [370, 640], [590, 650], [810, 640], [1010, 640]],
@@ -22,8 +22,8 @@ G.scenes.treasure = {
     this.dr = { look: -1, happy: 0, squash: 0 };
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 330, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('treasure') });
-    S.data.treasure++; S.save();
-    Voice.say(hasAbility('glow') ? 'Найди сундук с вкусняшками! Дракоша светится и подскажет, где он.' : 'Найди сундук с вкусняшками! Нажимай на кустики, камушки и грибы.');
+
+    Voice.say(hasAbility('glow') ? 'Найди сундук! ' + P().dragon.name + ' светится и подскажет, где он.' : 'Найди сундук с вкусняшками! Нажимай на кустики, камушки и грибы.');
   },
   down(x, y) {
     if (this.won) return;
@@ -41,7 +41,7 @@ G.scenes.treasure = {
     if (s.what === 'chest') {
       this.won = true;
       setTimeout(() => {
-        Sound.win(); s.chestOpen = true;
+        Sound.win(); s.chestOpen = true; GW('treasure');
         G.burst(s.x, s.y - 60, { kind: 'star', n: 30, speed: 380 });
         UI.reward(4, s.x, s.y - 60);
         Voice.say(M.pick(['Ура! Сундук с вкусняшками!', 'Нашёл! Молодец!', 'Вот это клад!']));
@@ -60,7 +60,7 @@ G.scenes.treasure = {
       const need = hasAbility('glow') ? 2 : 6;
       if (this.fails >= need && !this.hintSpot) {
         this.hintSpot = this.spots.find(q => q.what === 'chest');
-        if (hasAbility('glow')) Voice.say('Смотри, Дракоша светится! Сундук там, где искорки.');
+        if (hasAbility('glow')) Voice.say('Смотри, ' + P().dragon.name + ' светится! Сундук там, где искорки.');
       }
     }
   },
@@ -96,7 +96,7 @@ G.scenes.treasure = {
       else Art.crystal(ctx, s.x, s.y, 1.05 * s.sc, s.color);
       ctx.restore();
     }
-    Art.dragon(ctx, 1170, 690, 0.55, { t, level: S.data.level, look: -1, happy: this.dr.happy > 0, blink: (t % 3.5 < 0.13) ? 1 : 0, glow: !!this.hintSpot && hasAbility('glow') });
+    Art.dragon(ctx, 1170, 690, 0.55, { t, look: -1, happy: this.dr.happy > 0, blink: (t % 3.5 < 0.13) ? 1 : 0, glow: !!this.hintSpot && hasAbility('glow') });
   },
   drawTop(ctx) {
     UI.drawCounterTopRight(ctx);

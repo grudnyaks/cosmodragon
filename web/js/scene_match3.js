@@ -3,7 +3,7 @@
 G.scenes.match3 = {
   N: 6, CS: 96, OX: 90, OY: 118, TYPES: 5,
   enter() {
-    const lvl = S.data.match;
+    const lvl = GL('match3');
     this.TYPES = lvl >= 2 ? 6 : 5;
     this.goal = Math.min(26 + lvl * 4, 60);
     this.moves = Math.ceil(this.goal / 3.1) + (this.TYPES === 6 ? 7 : 4);
@@ -96,7 +96,7 @@ G.scenes.match3 = {
     }
     this.combo++;
     Sound.chime(1 + this.combo * 0.12);
-    const mx = 1000, my = 690 - 115 * 0.75;
+    const mx = 1000, my = 690 + Art.dragonHeadY(PS().level, 0.75);
     let n = 0;
     for (const p of list) {
       const tile = this.g[p.c][p.r];
@@ -168,11 +168,11 @@ G.scenes.match3 = {
   },
   win() {
     this.won = true;
-    S.data.match++; S.save();
+    GW('match3');
     Sound.win(); Sound.purr(1.5); this.dr.happy = 4;
     UI.reward(6, 1000, 500);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(200, 1100), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
-    Voice.say('Ура! Животик Дракоши полный! Ты молодец!');
+    Voice.say('Ура! Животик полный! Ты молодец!');
     setTimeout(() => { this.again.hidden = false; }, 1500);
   },
   update(dt) {
@@ -184,8 +184,7 @@ G.scenes.match3 = {
   },
   draw(ctx) {
     const t = G.t, { N, CS, OX, OY } = this;
-    Art.sky(ctx, '#2b1a6e', '#7a4bc4', '#ff9ad5');
-    Art.stars(ctx, 31, 60, t);
+    World.calm(ctx, t);
     Art.rr(ctx, OX - 16, OY - 16, N * CS + 32, N * CS + 32, 30); ctx.fillStyle = 'rgba(255,240,250,0.92)'; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#2a1650'; ctx.stroke();
     for (let c = 0; c < N; c++) for (let r = 0; r < N; r++) {
       Art.rr(ctx, OX + c * CS + 4, OY + r * CS + 4, CS - 8, CS - 8, 18);
@@ -203,7 +202,7 @@ G.scenes.match3 = {
     }
     ctx.restore();
     // Дракоша и животик-прогресс
-    const lvl = S.data.level;
+    const lvl = PS().level;
     Art.dragon(ctx, 1000, 690, 0.75, { t, level: lvl, mouth: this.dr.mouth, squash: this.dr.squash, happy: this.dr.happy > 0, look: -0.8, fire: this.dr.fire, blink: (t % 3.2 < 0.13) ? 1 : 0 });
     UI.progress(ctx, 800, 170, 400, 46, this.got / this.goal, '#ff7eb6');
     Art.treat(ctx, 0, 800, 192, 0.6);
