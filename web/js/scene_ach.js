@@ -64,13 +64,16 @@ G.scenes.ach = {
       UI.text(ctx, 'Сложность игр', 640, 170, 30, '#fff', 'center', true);
       UI.text(ctx, 'Сложность растёт сама с каждой победой; здесь — стартовый уровень.', 640, 285, 20, '#d6c8ff', 'center', false);
       const inf = this.info;
+      let err = '';
+      if (inf && inf.error) err = /404/.test(inf.error) ? 'Сервер обновлений недоступен (404): репозиторий на GitHub должен быть публичным.'
+        : /Unknown|resolve|connect|timeout/i.test(inf.error) ? 'Нет связи с интернетом — проверим позже.' : 'Ошибка: ' + inf.error.slice(0, 70);
       const lines = inf ? [
         'Версия игры: ' + inf.webActive + '   (в APK: ' + inf.webBundled + ', скачано: ' + inf.webDownloaded + ')',
         'Версия приложения (APK): ' + inf.apk + (inf.remoteApk > inf.apk ? '   → доступна ' + inf.remoteApk : ''),
-        'Последняя версия на сервере: ' + (inf.remoteWeb || '—') + '   Статус: ' + inf.result + (inf.error ? ' (' + inf.error + ')' : ''),
-      ] : ['Версия игры: ' + G.webVersion, 'Обновление по воздуху работает в Android-приложении.'];
-      Art.rr(ctx, 180, 420, 920, 170, 24); ctx.fillStyle = 'rgba(30,14,70,0.75)'; ctx.fill();
-      lines.forEach((ln, i) => UI.text(ctx, ln, 640, 456 + i * 44, 21, '#fff', 'center', false));
+        'На сервере: игра ' + (inf.remoteWeb || '—') + '.  Статус: ' + inf.result,
+      ].concat(err ? [err] : []) : ['Версия игры: ' + G.webVersion, 'Обновление по воздуху работает в Android-приложении.'];
+      Art.rr(ctx, 140, 410, 1000, 205, 24); ctx.fillStyle = 'rgba(30,14,70,0.75)'; ctx.fill();
+      lines.forEach((ln, i) => UI.text(ctx, ln, 640, 444 + i * 44, 21, i === 3 ? '#ffb3c8' : '#fff', 'center', false));
       if (this.msg) UI.text(ctx, this.msg, 640, 700, 22, '#ffd23f', 'center', true);
     }
   },
