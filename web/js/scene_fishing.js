@@ -34,7 +34,7 @@ G.scenes.fishing = {
     this.fish = this.fish.filter(f => f === h.catch || (f.x > G.view.x0 - 100 && f.x < G.view.x1 + 100));
     if (!this.won && !this.over) {
       this.time -= dt;
-      if (this.time <= 0) { this.time = 0; this.over = true; Voice.say('Время вышло! Поймано ' + this.score + '. Попробуй ещё раз!'); UI.reward(Math.floor(this.score / 3), 640, 400); setTimeout(() => { this.again.hidden = false; }, 1200); }
+      if (this.time <= 0) { this.time = 0; this.over = true; Voice.say('Время вышло! Попробуй ещё раз!'); UI.reward(Math.floor(this.score / 3), 640, 400); setTimeout(() => { this.again.hidden = false; }, 1200); }
       this.spawnT -= dt; if (this.spawnT <= 0 && this.fish.length < 9) { this.spawn(false); this.spawnT = M.rnd(0.5, 1.1); }
     }
     // крючок

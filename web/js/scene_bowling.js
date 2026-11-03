@@ -99,12 +99,12 @@ G.scenes.bowling = {
     Sound.win(); Sound.purr(1.4);
     UI.reward(5 + Math.floor(this.total / 5), 640, 300);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
-    Voice.say('Ура! Ты сбил ' + this.total + ' кеглей! Победа!');
+    Voice.say('Ура! Победа! Отличный бросок!');
     setTimeout(() => { this.again.hidden = false; }, 1400);
   },
   lose() {
     this.lost = true; this.state = 'done';
-    Voice.say('Сбито ' + this.total + ' из ' + this.need + '. Почти! Попробуй ещё раз!');
+    Voice.say('Почти получилось! Попробуй ещё раз!');
     UI.reward(Math.floor(this.total / 6), 640, 300);
     setTimeout(() => { this.again.hidden = false; }, 1200);
   },

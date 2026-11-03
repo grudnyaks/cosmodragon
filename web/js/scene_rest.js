@@ -9,7 +9,7 @@ G.scenes.rest = {
     if (!d.restUntil || d.restUntil < Date.now()) { d.restUntil = Date.now() + 5 * 60 * 1000; S.save(); }
     this.hold = 0; this.tip = 0; this.nextTip = 0;
     this.zz = [];
-    Voice.say(P().dragon.name + ' устал и уснул. Давай и мы отдохнём немножко! ' + REST_TIPS[0]);
+    Voice.say('Дракончик устал и уснул. Давай и мы отдохнём немножко! ' + REST_TIPS[0]);
     this.nextTip = G.t + 25;
   },
   down(x, y) { if (Math.hypot(x - (G.view.x1 - 80), y - 80) < 60) this.holding = true; },
@@ -20,7 +20,7 @@ G.scenes.rest = {
   },
   update(dt) {
     if (this.holding) { this.hold += dt; if (this.hold >= 3) { this.holding = false; this.finish(); return; } } // взрослый держит луну 3 секунды
-    if (Date.now() >= S.data.restUntil && !this.awake) { this.awake = true; Sound.chime(1.2); Voice.say(P().dragon.name + ' проснулся и снова готов играть!'); setTimeout(() => this.finish(), 3500); }
+    if (Date.now() >= S.data.restUntil && !this.awake) { this.awake = true; Sound.chime(1.2); Voice.say('Дракончик проснулся и снова готов играть!'); setTimeout(() => this.finish(), 3500); }
     if (G.t > this.nextTip && !this.awake) { this.tip = (this.tip + 1) % REST_TIPS.length; Voice.say(REST_TIPS[this.tip]); this.nextTip = G.t + 30; }
     if (Math.random() < dt * 1.2) this.zz.push({ x: 700, y: 430, age: 0 });
     for (const z of this.zz) z.age += dt;

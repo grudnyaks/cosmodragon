@@ -86,7 +86,7 @@ G.scenes.home = {
     this.returnBtn.hidden = true;
     dr.lift = 700; dr.flying = true; Sound.whoosh();
     G.tween(dr, { lift: 0 }, 2, G.ease.outQuad, () => { dr.flying = false; Sound.purr(1.4, { planet: pd.id }); G.burst(dr.x, 450, { kind: 'heart', n: 10, up: true, g: -60, speed: 160 }); });
-    Voice.say(pd.dragon.name + ' вернулся домой на планету ' + pd.name + '!');
+    Voice.say(pd.dragon.name + ' вернулся домой!');
   },
   gatherAll() {
     const list = PLANETS.filter(p => this.canMove(p.id));
@@ -99,7 +99,7 @@ G.scenes.home = {
     S.save(); stat('moved', list.length);
     Sound.magic(); Sound.whoosh();
     for (const p of list) { const i = this.backRow().indexOf(p.id); if (i < 0) continue; const pos = this.guestPos(i); G.burst(pos[0], pos[1] - 60, { kind: 'star', n: 16, speed: 220 }); }
-    Voice.say('Ура! ' + list.map(p => p.dragon.name).join(', ') + (list.length > 1 ? ' прилетели' : ' прилетел') + ' на Ням-Ням!');
+    Voice.say(list.length > 1 ? 'Ура! Драконы прилетели на Ням-Ням!' : 'Ура! ' + list[0].dragon.name + ' прилетел на Ням-Ням!');
   },
   guestPos(i) { return [[360, 520], [850, 518], [970, 526], [1065, 516], [300, 548], [790, 540], [1110, 548]][Math.max(0, i) % 7]; },
   // кто стоит в заднем ряду (все драконы экрана, кроме переднего)
@@ -133,7 +133,7 @@ G.scenes.home = {
     if (G.sceneName !== 'home') return;
     const ps = PS(), pd = P();
     if (this.moved) { Voice.say(pd.dragon.name + ' сейчас в гостях на планете Ням-Ням. Можно вернуть его домой кнопкой.'); return; }
-    if (ps.serpent === 'kidnapped') { Voice.say(ps.keys >= 3 ? 'Все ключи найдены! Нажми на кнопку, чтобы спасти Листика!' : 'Листика похитил Змей! Выигрывай игры, чтобы найти ключи: ' + ps.keys + ' из трёх.'); return; }
+    if (ps.serpent === 'kidnapped') { Voice.say(ps.keys >= 3 ? 'Все ключи найдены! Нажми на кнопку, чтобы спасти Листика!' : 'Листика похитил Змей! Выигрывай игры, чтобы найти три ключа.'); return; }
     if (ps.level === 0) Voice.say(ps.treats > 0 ? 'Согрей яйцо! Нажми на кнопку с угощением.' : 'Поиграй в игры, чтобы найти угощение для яйца!');
     else if (ps.treats > 0 && ps.level < MAX_LEVEL) Voice.say(pd.dragon.name + ' хочет кушать! Нажми на угощение.');
   },

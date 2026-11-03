@@ -14,7 +14,7 @@ G.scenes.read = {
     this.phase = 'build'; this.built = 0; this.needBuild = 6;
     this.cons = M.pick(this.consonants().length ? this.consonants() : ['М']);
     this.merge = null;
-    this.vow = VOWELS.filter(v => !(this.cons === 'К' || this.cons === 'Г' || this.cons === 'Х') || v !== 'Ы').filter(v => !('ЖШ'.includes(this.cons) && v === 'Ы'));
+    this.vow = VOWELS.filter(v => !(this.cons === 'К' || this.cons === 'Г' || this.cons === 'Х') || v !== 'Ы').filter(v => !('ЖШЧЩ'.includes(this.cons) && v === 'Ы'));
     Voice.say('Давай читать слоги! Это буква ' + LETTERS[this.cons][0] + '. Нажми на любую гласную — и они встретятся!');
   },
   vowPos(i) { const n = this.vow.length; return { x: 760 + (i % 3) * 150, y: 300 + Math.floor(i / 3) * 160 }; },
@@ -52,7 +52,7 @@ G.scenes.read = {
     const cons = this.consonants(), opts = [];
     const target = M.pick(cons) + M.pick(['А', 'О', 'У', 'И']);
     opts.push(target);
-    while (opts.length < 4) { const o = (Math.random() < 0.5 ? target[0] : M.pick(cons)) + M.pick(VOWELS.slice(0, 5)); if (!opts.includes(o) && !/[КГХЖШ]Ы/.test(o)) opts.push(o); }
+    while (opts.length < 4) { const o = (Math.random() < 0.5 ? target[0] : M.pick(cons)) + M.pick(VOWELS.slice(0, 5)); if (!opts.includes(o) && !/[КГХЖШЧЩ]Ы/.test(o)) opts.push(o); }
     this.target = target; this.opts = M.shuffle(opts);
     this.say = 'Найди слог ' + target.toLowerCase() + '!';
     Voice.say(this.say);
@@ -77,7 +77,7 @@ G.scenes.read = {
         if (this.tapped === n) {
           setTimeout(() => {
             if (G.scene !== this) return;
-            Voice.say(this.w.syl.map(s => s.toLowerCase()).join('-') + '. ' + this.w.word.toLowerCase() + '!');
+            Voice.say(this.w.syl.map(s => s.toLowerCase()).join(' ') + '. ' + this.w.word.toLowerCase() + '!');
             G.tween(this, { reveal: 1 }, 0.6, G.ease.outBack); Sound.chime(1.3); this.dr.happy = 1.5;
             const r = Learn.data().W; r[this.w.word] = r[this.w.word] || { ok: 0, bad: 0 }; r[this.w.word].seen = 1; S.save();
             setTimeout(() => { if (G.scene !== this) return; this.read++; if (this.read >= this.needRead) this.wordQuizStart(); else this.loadWord(); }, 2600);
@@ -130,7 +130,7 @@ G.scenes.read = {
       S.save();
     }
     UI.reward(this.score >= this.total - 1 ? 3 : 1, 640, 300);
-    Voice.say('Урок чтения окончен! Правильно: ' + this.score + ' из ' + this.total + '. Ты молодец!');
+    Voice.say('Урок чтения окончен! Ты молодец!');
     UI.add(this, { x: 520, y: 600, r: 60, icon: 'replay', color: '#41d982', pulse: true, onTap: () => G.go('read', { mode: this.mode }) });
     UI.add(this, { x: 760, y: 600, r: 60, icon: 'home', color: '#ff7eb6', onTap: () => G.go('school') });
   },

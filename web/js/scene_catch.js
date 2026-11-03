@@ -12,7 +12,7 @@ G.scenes.catch = {
     this.speed = Math.min(170 + lvl * 20, 400);
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 330, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('catch') });
-    Voice.say('Вкусняшки падают с неба! Води пальцем, чтобы ' + P().dragon.name + ' их ловил. А от метеоритов уворачивайся!');
+    Voice.say('Вкусняшки падают с неба! Води пальцем, чтобы дракончик их ловил. А от метеоритов уворачивайся!');
   },
   down(x) { this.dr.tx = x; },
   move(x) { this.dr.tx = x; },
@@ -60,7 +60,7 @@ G.scenes.catch = {
   },
   lose() {
     this.lost = true; this.items.length = 0;
-    Voice.say('Ой-ой, три раза ударился! ' + P().dragon.name + ' устал. Попробуй ещё раз!');
+    Voice.say('Ой-ой, три раза ударился! Дракончик устал. Попробуй ещё раз!');
     UI.reward(Math.floor(this.got / 6), this.dr.x, 520);
     setTimeout(() => { this.again.hidden = false; }, 1200);
   },
@@ -70,7 +70,7 @@ G.scenes.catch = {
     Sound.win(); Sound.purr(1.6); this.dr.happy = 4;
     UI.reward(5, this.dr.x, 520);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
-    Voice.say('Ура! ' + P().dragon.name + ' наелся! Молодец!');
+    Voice.say('Ура! Дракончик наелся! Молодец!');
     setTimeout(() => { this.again.hidden = false; }, 1500);
   },
   draw(ctx) {

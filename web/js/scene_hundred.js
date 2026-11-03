@@ -84,7 +84,7 @@ G.scenes.hundred = {
     }
     S.save();
     UI.reward(this.score >= 6 ? 3 : 1, 640, 300);
-    Voice.say('Урок счёта окончен! Правильно: ' + this.score + ' из ' + this.total + '.' + (this.score >= 6 && d.openC <= 100 ? ' Теперь будем считать до ' + numWord(d.openC) + '!' : ''));
+    Voice.say('Урок счёта окончен! Ты молодец!' + (this.score >= 6 && d.openC <= 100 ? ' Теперь будем считать до ' + numWord(d.openC) + '!' : ''));
     UI.add(this, { x: 520, y: 600, r: 60, icon: 'replay', color: '#41d982', pulse: true, onTap: () => G.go('hundred', { mode: 'quiz' }) });
     UI.add(this, { x: 760, y: 600, r: 60, icon: 'home', color: '#ff7eb6', onTap: () => G.go('school') });
   },

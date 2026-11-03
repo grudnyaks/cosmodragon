@@ -71,7 +71,7 @@ G.scenes.route = {
       Sound.bump(); Sound.chime(0.8);
       G.burst(m.x, m.y, { kind: 'dot', n: 18, colors: ['#b39a86', '#ffd23f', '#7ee8ff'], speed: 260 });
       G.floatText(m.x, m.y - 50, 'Щит!', '#7ee8ff');
-      Voice.say(P().dragon.name + ' защитил ракету!');
+      Voice.say('Дракончик защитил ракету!');
       return;
     }
     this.flying = false; this.path = null;

@@ -92,8 +92,32 @@ function hasAbility(name) {
 
 // Озвучка текста (Android TTS через мост, иначе браузерная)
 const Voice = {
+  // Записанный голос: web/voice/phrases.json (текст → номер), web/voice/files.json (какие файлы уже есть).
+  // Фраза собирается из записанных кусочков; если хоть одного нет — говорит синтезатор речи.
+  map: null, have: null, queue: [], cur: null, token: 0, miss: [],
+  init() {
+    fetch('voice/phrases.json').then(r => r.json()).then(m => { this.map = m; }).catch(() => { });
+    fetch('voice/files.json').then(r => r.json()).then(f => { this.have = new Set(f.map(String)); }).catch(() => { this.have = new Set(); });
+  },
   say(text) {
     if (!S.data.voice || !text) return;
+    this.stop();
+    const ids = this.map && typeof VoiceNorm !== 'undefined' ? VoiceNorm.segment(text, this.map) : null;
+    if (!ids) { if (this.miss.length < 200) this.miss.push(text); }
+    else if (this.have && ids.every(id => this.have.has(id))) { this.queue = ids.slice(); this.playNext(++this.token); return; }
+    this.tts(text);
+  },
+  playNext(tok) {
+    if (tok !== this.token) return;
+    const id = this.queue.shift();
+    if (!id) { this.cur = null; return; }
+    const a = new Audio('voice/' + id + '.mp3');
+    this.cur = a;
+    a.onended = () => setTimeout(() => this.playNext(tok), 40);
+    a.onerror = () => this.playNext(tok);
+    a.play().catch(() => { });
+  },
+  tts(text) {
     try {
       if (window.Android && Android.speak) { Android.speak(text); return; }
       if (window.speechSynthesis) {
@@ -105,9 +129,12 @@ const Voice = {
     } catch (e) { }
   },
   stop() {
+    this.token++; this.queue = [];
+    if (this.cur) { try { this.cur.pause(); } catch (e) { } this.cur = null; }
     try {
       if (window.Android && Android.stopSpeak) Android.stopSpeak();
       else if (window.speechSynthesis) speechSynthesis.cancel();
     } catch (e) { }
   },
 };
+Voice.init();

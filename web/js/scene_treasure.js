@@ -23,7 +23,7 @@ G.scenes.treasure = {
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 330, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('treasure') });
 
-    Voice.say(hasAbility('glow') ? 'Найди сундук! ' + P().dragon.name + ' светится и подскажет, где он.' : 'Найди сундук с вкусняшками! Нажимай на кустики, камушки и грибы.');
+    Voice.say(hasAbility('glow') ? 'Найди сундук! Дракончик светится и подскажет, где он.' : 'Найди сундук с вкусняшками! Нажимай на кустики, камушки и грибы.');
   },
   down(x, y) {
     if (this.won) return;
@@ -60,7 +60,7 @@ G.scenes.treasure = {
       const need = hasAbility('glow') ? 2 : 6;
       if (this.fails >= need && !this.hintSpot) {
         this.hintSpot = this.spots.find(q => q.what === 'chest');
-        if (hasAbility('glow')) Voice.say('Смотри, ' + P().dragon.name + ' светится! Сундук там, где искорки.');
+        if (hasAbility('glow')) Voice.say('Смотри, дракончик светится! Сундук там, где искорки.');
       }
     }
   },

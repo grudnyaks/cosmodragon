@@ -26,7 +26,7 @@ G.scenes.school = {
     this.tiles = tiles;
     tiles.forEach((t, i) => UI.add(this, { x: 270 + (i % 3) * 370, y: 225 + Math.floor(i / 3) * 150, w: 350, h: 124, color: t.color, onTap: () => { Voice.stop(); G.go(t.go[0], t.go[1]); },
       draw: (ctx) => { UI.text(ctx, t.sub, -110, 0, t.sub === '?' || t.sub === '✎' ? 64 : t.small ? 28 : 40, '#fff', 'center', true); UI.text(ctx, t.label, 50, 0, 27, '#fff', 'center', true); } }));
-    Voice.say(P().dragon.name + ' хочет учиться! Научи его буквам и цифрам. Выбери, что будем делать.');
+    Voice.say('Дракончик хочет учиться! Научи его буквам и цифрам. Выбери, что будем делать.');
   },
   // ---------- карточки «учим» ----------
   learnStart() {
@@ -119,7 +119,7 @@ G.scenes.school = {
     if (this.score >= 6) GW('school');
     UI.reward(this.score >= 6 ? 3 : 1, 640, 300);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
-    Voice.say('Урок окончен! Правильных ответов: ' + this.score + ' из ' + this.total + '. ' + P().dragon.name + ' говорит: спасибо, учитель!');
+    Voice.say('Урок окончен! Дракончик говорит: спасибо, учитель!');
     UI.add(this, { x: 520, y: 600, r: 60, icon: 'replay', color: '#41d982', pulse: true, onTap: () => G.go('school', { mode: 'quiz', kind: this.kind }) });
     UI.add(this, { x: 760, y: 600, r: 60, icon: 'home', color: '#ff7eb6', onTap: () => G.go('home') });
   },

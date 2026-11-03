@@ -51,7 +51,7 @@ G.scenes.bunny = {
   },
   timeUp() {
     this.over = true;
-    Voice.say('Время вышло! Ты погладил ' + this.score + '. Попробуй ещё раз!');
+    Voice.say('Время вышло! Попробуй ещё раз!');
     UI.reward(Math.floor(this.score / 4), 640, 400);
     setTimeout(() => { this.again.hidden = false; }, 1200);
   },

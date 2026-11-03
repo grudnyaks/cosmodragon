@@ -36,7 +36,7 @@ G.scenes.memory = {
     this.flipped = []; this.lock = false; this.won = false; this.misses = 0;
     if (hasAbility('eyes')) { // Зоркие глазки: показать все карточки
       this.lock = true;
-      G.wait(0.8, () => { this.cards.forEach(c => G.tween(c, { open: 1 }, 0.3)); Voice.say(P().dragon.name + ' показывает карточки. Запоминай!'); });
+      G.wait(0.8, () => { this.cards.forEach(c => G.tween(c, { open: 1 }, 0.3)); Voice.say('Дракончик показывает карточки. Запоминай!'); });
       G.wait(2.9, () => { this.cards.forEach(c => G.tween(c, { open: 0 }, 0.3)); });
       G.wait(3.3, () => { this.lock = false; });
     }
