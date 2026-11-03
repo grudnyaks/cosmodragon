@@ -12,7 +12,8 @@ G.scenes.catapult = {
     M.shuffle(this.cols.slice()).slice(0, Math.min(nT, nC)).forEach(c => { c.target = true; });
     this.extraT = []; // летающие ледышки на высоких уровнях
     if (lvl >= 7) this.extraT.push({ x: 760, y: 200, ph: 0, alive: true });
-    this.shots = this.targetsLeft() + 3;
+    this.shots = this.targetsLeft() + 3 + (hasAbility('bigfire') ? 3 : hasAbility('fire') ? 1 : 0);
+    this.R = hasAbility('bigfire') ? 1.5 : 1;
     this.ball = null; this.drag = null; this.won = false; this.lost = false;
     this.preview = Math.max(0.15, 0.9 - lvl * 0.07);
     UI.homeButton(this);
@@ -41,12 +42,12 @@ G.scenes.catapult = {
       // блок, в который попали (и соседний по радиусу)
       for (let k = c.h - 1; k >= 0; k--) {
         const by = this.GROUND - (k + 0.5) * BS;
-        if (Math.abs(x - c.x) < BS * 0.9 && Math.abs(y - by) < BS * 0.9) { c.h--; G.burst(c.x, by, { kind: 'smoke', n: 6, colors: ['#ffffff', '#bff5ff'], g: -40, speed: 120, size: 16 }); break; }
+        if (Math.abs(x - c.x) < BS * 0.9 * this.R && Math.abs(y - by) < BS * 0.9 * this.R) { c.h--; G.burst(c.x, by, { kind: 'smoke', n: 6, colors: ['#ffffff', '#bff5ff'], g: -40, speed: 120, size: 16 }); break; }
       }
       const ty = this.GROUND - c.h * BS - 30;
-      if (c.target && Math.hypot(x - c.x, y - ty) < 70) { c.target = false; this.killFx(c.x, ty); }
+      if (c.target && Math.hypot(x - c.x, y - ty) < 70 * this.R) { c.target = false; this.killFx(c.x, ty); }
     }
-    for (const e of this.extraT) if (e.alive && Math.hypot(x - e.x, y - e.y) < 70) { e.alive = false; this.killFx(e.x, e.y); }
+    for (const e of this.extraT) if (e.alive && Math.hypot(x - e.x, y - e.y) < 70 * this.R) { e.alive = false; this.killFx(e.x, e.y); }
     this.ball = null;
     setTimeout(() => this.check(), 700);
   },
@@ -105,7 +106,7 @@ G.scenes.catapult = {
         for (let i = 0; i < 30 * this.preview; i++) { vy += 900 * 0.03; x += vx * 0.03; y += vy * 0.03; if (i % 2 === 0) { ctx.save(); ctx.globalAlpha = 0.8 - i / 40; Art.ell(ctx, x, y, 5, 5, '#fff3a0'); ctx.restore(); } }
       }
     }
-    if (this.ball) this.fireball(ctx, this.ball.x, this.ball.y, t);
+    if (this.ball) this.fireball(ctx, this.ball.x, this.ball.y, t, this.R);
     Art.dragon(ctx, 90, 650, 0.45, { t, look: 1, fire: this.ball ? 0.3 : 0 });
     // табло
     UI.text(ctx, 'Ледышки: ' + this.targetsLeft(), 470, 50, 30, '#bff5ff', 'center', true);

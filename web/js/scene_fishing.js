@@ -4,7 +4,7 @@ G.scenes.fishing = {
   SURF: 250,
   enter() {
     const lvl = GL('fishing');
-    this.need = Math.min(8 + lvl, 22); this.time = 60; this.score = 0; this.lives = 3;
+    this.need = Math.min(8 + lvl, 22); this.time = 60; this.score = 0; this.lives = this.maxLives = hasAbility('shield2') ? 4 : 3;
     this.fishSpeed = Math.min(70 + lvl * 9, 200); this.jellyP = Math.min(0.15 + lvl * 0.025, 0.38);
     this.boat = { x: 640, tx: 640 };
     this.hook = { y: 0, state: 'up', catch: null };
@@ -104,7 +104,7 @@ G.scenes.fishing = {
     // табло
     UI.progress(ctx, 330, 26, 420, 44, this.score / this.need, '#ffd23f');
     UI.text(ctx, 'Улов: ' + this.score + ' / ' + this.need, 540, 49, 26, '#fff', 'center', true);
-    for (let i = 0; i < 3; i++) Art.heart(ctx, 800 + i * 44, 50, 38, i < this.lives ? '#ff3b5c' : 'rgba(255,255,255,0.25)');
+    for (let i = 0; i < this.maxLives; i++) Art.heart(ctx, 800 + i * 44, 50, 38, i < this.lives ? '#ff3b5c' : 'rgba(255,255,255,0.25)');
     const k = this.time / 60; Art.ell(ctx, 970, 50, 26, 26, '#fff'); Art.stroke(ctx, 3);
     ctx.beginPath(); ctx.moveTo(970, 50); ctx.arc(970, 50, 22, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.closePath(); ctx.fillStyle = k < 0.25 ? '#ff3b5c' : '#41d982'; ctx.fill();
     if ((this.won || this.over) && !this.again.hidden) UI.text(ctx, 'Ещё раз?', 640, 260, 48, '#fff', 'center', true);

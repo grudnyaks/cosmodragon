@@ -48,13 +48,13 @@ G.scenes.home = {
       onTap: () => { Voice.stop(); G.go('map', { reveal: (nextPlanet(P().id) || {}).id }); } });
     this.beaconBtn = UI.add(this, { x: 640, y: 168, w: 480, h: 84, label: 'Зажечь маяк!', icon: 'star', iconX: -180, fontSize: 34, color: '#ffb23a', pulse: true, hidden: true,
       onTap: () => this.lightBeacon() });
-    this.rescueBtn = UI.add(this, { x: 650, y: 430, w: 460, h: 84, label: 'Спасти ' + (pd.id === 'jungle' ? 'Листика' : ''), icon: 'sword', iconX: -170, fontSize: 34, color: '#ff3b5c', pulse: true, hidden: true,
-      onTap: () => { Voice.stop(); G.go('serpent'); } });
+    this.rescueBtn = UI.add(this, { x: 650, y: 430, w: 460, h: 84, label: 'Спасти ' + pd.dragon.acc, icon: 'sword', iconX: -170, fontSize: pd.dragon.acc.length > 7 ? 30 : 34, color: '#ff3b5c', pulse: true, hidden: true,
+      onTap: () => { Voice.stop(); G.go('rescue'); } });
     // воришка (Радуга)
     this.th = pd.special === 'thief' ? { state: 'wait', t: M.rnd(14, 26), x: 0, flip: false, loot: 0 } : null;
-    // змей (Джунгли)
+    // змей: похищает подросшего дракончика (уровень 3) на любой планете
     this.sp = null;
-    if (pd.special === 'serpent' && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 1500);
+    if (this.serpentDue()) setTimeout(() => this.kidnap(), 1500);
     const fs = this.front ? PS(this.front) : null;
     if (fs && fs.level < MAX_LEVEL && fs.fed >= levelNeed(fs.level, this.front) && fs.serpent !== 'kidnapped') {
       setTimeout(() => { if (G.scene === this && !this.busy) { Voice.say(PLANET_BY_ID[this.front].dragon.name + ' подрос, пока ты играл!'); fs.level === 0 ? this.hatch() : this.levelUp(); } }, 1200);
@@ -133,7 +133,7 @@ G.scenes.home = {
     if (G.sceneName !== 'home') return;
     const ps = PS(), pd = P();
     if (this.moved) { Voice.say(pd.dragon.name + ' сейчас в гостях на планете Ням-Ням. Можно вернуть его домой кнопкой.'); return; }
-    if (ps.serpent === 'kidnapped') { Voice.say(ps.keys >= 3 ? 'Все ключи найдены! Нажми на кнопку, чтобы спасти Листика!' : 'Листика похитил Змей! Выигрывай игры, чтобы найти три ключа.'); return; }
+    if (ps.serpent === 'kidnapped') { Voice.say(ps.keys >= 3 ? 'Все ключи найдены! Нажми на кнопку, чтобы спасти ' + pd.dragon.acc + '!' : 'Змей похитил ' + pd.dragon.acc + '! Выигрывай игры, чтобы найти три ключа.'); return; }
     if (ps.level === 0) Voice.say(ps.treats > 0 ? 'Согрей яйцо! Нажми на кнопку с угощением.' : 'Поиграй в игры, чтобы найти угощение для яйца!');
     else if (ps.treats > 0 && ps.level < MAX_LEVEL) Voice.say(pd.dragon.name + ' хочет кушать! Нажми на угощение.');
   },
@@ -210,7 +210,7 @@ G.scenes.home = {
   feed() {
     const ps = this.fps(), dr = this.dr, pd = this.fpd();
     if (this.busy) return;
-    if (dr.gone) { Voice.say('Листика нет дома! Его похитил Змей. Найди три ключа, чтобы его спасти!'); return; }
+    if (dr.gone) { if (this.moved) Voice.say(pd.dragon.name + ' сейчас в гостях на планете Ням-Ням. Можно вернуть его домой кнопкой.'); else Voice.say('Змей похитил ' + P().dragon.acc + '! Выигрывай игры, чтобы найти три ключа.'); return; }
     if (ps.treats <= 0) {
       Voice.say('Угощение закончилось! Поиграй в игры, чтобы найти ещё.');
       dr.tilt = 0.25; G.tween(dr, { tilt: 0 }, 1.2, G.ease.outElastic);
@@ -266,7 +266,7 @@ G.scenes.home = {
       else setTimeout(() => this.remoteBeacon(this.front), 5000);
     }
     else setTimeout(() => { if (this.banner && this.banner.lvl === ps.level) this.banner.tapClose = true; }, 1500);
-    if (pd.special === 'serpent' && this.front === S.data.planet && ps.serpent === 'none' && ps.level >= 4) setTimeout(() => this.kidnap(), 5000);
+    if (this.serpentDue()) setTimeout(() => this.kidnap(), 5000);
   },
   lightBeacon() {
     if (G.sceneName !== 'home' || G.scene !== this) return;
@@ -330,15 +330,16 @@ G.scenes.home = {
     }
   },
   // ---------- змей ----------
+  serpentDue() { const ps = PS(); return !this.moved && this.front === S.data.planet && ps.serpent === 'none' && ps.level >= SERPENT_LEVEL && ps.level < MAX_LEVEL; },
   kidnap() {
     const ps = PS();
-    if (G.sceneName !== 'home' || this.busy || ps.serpent !== 'none') return;
+    if (G.sceneName !== 'home' || this.busy || !this.serpentDue()) return;
     this.busy = true; this.banner = null;
     const sp = this.sp = { head: G.view.x1 + 100, y: 560, phase: 'in', carry: false };
     Sound.hiss(); Voice.say('Ой! Кто это шипит в кустах?');
     G.tween(sp, { head: 760 }, 2.5, G.ease.inOutQuad, () => {
       Sound.hiss(); sp.carry = true; this.dr.gone = true;
-      Voice.say('Злой Змей схватил Листика! Нужно его спасти! Выигрывай игры в джунглях и найди три ключа.');
+      Voice.say('Злой Змей схватил ' + P().dragon.acc + '! Нужно его спасти! Выигрывай игры и найди три ключа.');
       G.tween(sp, { head: G.view.x1 + 600 }, 3, G.ease.inOutQuad, () => {
         this.sp = null; ps.serpent = 'kidnapped'; ps.keys = 0; S.save(); this.busy = false;
       }, 1.2);

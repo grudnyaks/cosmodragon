@@ -44,8 +44,8 @@ function PS(id) { return S.data.planets[id || S.data.planet]; }
 function GL(key) { return (PS().games[key] || 0) + S.data.diff + P().order; }
 function GW(key) {
   const ps = PS(), g = ps.games; g[key] = (g[key] || 0) + 1;
-  // в Джунглях, пока Листик похищен, каждая победа приносит ключ
-  if (P().special === 'serpent' && ps.serpent === 'kidnapped' && ps.keys < 3) {
+  // пока дракончик этой планеты у Змея, каждая победа приносит ключ
+  if (ps.serpent === 'kidnapped' && ps.keys < 3) {
     ps.keys++;
     if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + ps.keys + ' из 3', 'key'), 1600);
   }
@@ -62,26 +62,27 @@ function stat(k, n) {
 const LEVELS = [
   { need: 4, title: 'Яйцо' },
   { need: 5, title: 'Малыш' },
-  { need: 6, title: 'Крылышки', skill: 'wings', icon: 'wing', short: 'Летает и ставит щит ракете в «Маршрутах»',
-    ability: 'У дракончика выросли крылышки! Теперь он умеет летать и защищает ракету щитом.' },
+  { need: 6, title: 'Крылышки', skill: 'wings', icon: 'wing', short: 'Показывает, куда покатится шар, в «Боулинге»',
+    ability: 'У дракончика выросли крылышки! Теперь он подсказывает, куда покатится шар.' },
   { need: 7, title: 'Сияние', skill: 'glow', icon: 'glow', short: 'Подсказывает, где сундук, в «Сокровищах»',
     ability: 'Дракончик научился светиться! Теперь он подсказывает, где спрятан сундук, и освещает лабиринт.' },
-  { need: 8, title: 'Огонёк', skill: 'fire', icon: 'fire', short: 'Сжигает целый ряд в «Три в ряд»',
-    ability: 'В дракончике зажёгся огонёк! Теперь он умеет сжигать целый ряд вкусняшек.' },
+  { need: 8, title: 'Огонёк', skill: 'fire', icon: 'fire', short: 'Лишний огненный шар в «Катапульте»',
+    ability: 'В дракончике зажёгся огонёк! Теперь у тебя больше огненных шаров.' },
   { need: 9, title: 'Быстрые лапки', skill: 'paws', icon: 'paw', short: 'Быстрее бегает и шире ловит',
     ability: 'У дракончика быстрые лапки! Теперь он быстрее бегает и ловит больше вкусняшек.' },
-  { need: 10, title: 'Хвостик-магнит', skill: 'magnet', icon: 'magnet', short: 'Притягивает вкусняшки и звёздочки',
-    ability: 'Хвостик стал магнитом! Теперь дракончик притягивает вкусняшки и звёздочки.' },
+  { need: 10, title: 'Хвостик-магнит', skill: 'magnet', icon: 'magnet', short: 'Притягивает вкусняшки в «Лови вкусняшки»',
+    ability: 'Хвостик стал магнитом! Теперь дракончик притягивает вкусняшки.' },
   { need: 11, title: 'Зоркие глазки', skill: 'eyes', icon: 'eye', short: 'Показывает все карточки в «Найди пару»',
     ability: 'У дракончика зоркие глазки! Он подсказывает в играх на внимание.' },
-  { need: 12, title: 'Двойной щит', skill: 'shield2', icon: 'shield', short: 'Два щита в полётах',
-    ability: 'Дракончик стал сильнее! Теперь он ставит два щита.' },
-  { need: 14, title: 'Большой огонь', skill: 'bigfire', icon: 'bigfire', short: 'Огонь крест-накрест два раза в «Три в ряд»',
-    ability: 'Огонь дракончика стал большим! Теперь он сжигает вкусняшки крест-накрест, и два раза.' },
+  { need: 12, title: 'Крепкий щит', skill: 'shield2', icon: 'shield', short: 'Лишнее сердечко в «Лови вкусняшки» и «Рыбалке»',
+    ability: 'Дракончик стал сильнее! Теперь у тебя есть лишнее сердечко.' },
+  { need: 14, title: 'Большой огонь', skill: 'bigfire', icon: 'bigfire', short: 'Огромные огненные шары в «Катапульте»',
+    ability: 'Огонь дракончика стал большим! Теперь огненные шары огромные.' },
   { need: 0, title: 'Звёздный дракон', skill: 'star', icon: 'star', short: 'Зажигает маяк планеты',
     ability: 'Дракончик стал настоящим Звёздным драконом! Теперь он может зажечь маяк!' },
 ];
 const MAX_LEVEL = 10;
+const SERPENT_LEVEL = 3; // на этом уровне Змей похищает дракончика
 const SKILL_LEVEL = {};
 LEVELS.forEach((l, i) => { if (l.skill) SKILL_LEVEL[l.skill] = i; });
 function levelNeed(lvl, pid) { const pd = PLANET_BY_ID[pid] || P(); return Math.max(1, Math.round(LEVELS[Math.min(lvl, MAX_LEVEL)].need * pd.mult)); }

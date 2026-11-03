@@ -139,6 +139,12 @@ G.scenes.bowling = {
       ctx.save(); ctx.translate(x, y); ctx.rotate(b.spin); for (const [hx, hy] of [[-6, -8], [5, -9], [0, 2]]) Art.ell(ctx, hx * k, hy * k, 3 * k, 3 * k, '#2a1650'); ctx.restore();
       Art.sparkle(ctx, x - 8 * k, y - 10 * k, 6 * k, '#fff');
     }
+    if (this.aim && hasAbility('wings') && this.aim.y - this.aim.y0 < -20) { // Крылышки: подсказка, куда покатится шар
+      const ang = Math.atan2(this.aim.y - this.aim.y0, (this.aim.x - this.aim.x0) * 0.8); let vx = Math.cos(ang) * 0.55, vy = Math.sin(ang) * 0.75; const n = Math.hypot(vx, vy); vx /= n; vy /= n;
+      let px = b.x, py = b.y; ctx.save(); ctx.globalAlpha = 0.8;
+      for (let i = 0; i < 40 && py > 0; i++) { px += vx * 16; py += vy * 16; if (Math.abs(px) > this.L.w - 24) { vx = -vx; px = M.clamp(px, -this.L.w + 24, this.L.w - 24); } if (i % 2 === 0) { const [sx, sy] = this.toScreen(px, py); Art.ell(ctx, sx, sy, 6 * this.sc(py) * 1.4, 6 * this.sc(py) * 1.4, '#7fffe0'); } }
+      ctx.restore();
+    }
     if (this.aim) { ctx.save(); ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.moveTo(this.aim.x0, this.aim.y0); ctx.lineTo(this.aim.x, this.aim.y); Art.stroke(ctx, 6, '#ffd23f'); ctx.restore(); }
     if (this.state === 'aim' && !this.aim) { const [x, y] = this.toScreen(b.x, b.y); const k = (t * 0.8) % 1; ctx.save(); ctx.globalAlpha = 1 - k; Art.ell(ctx, x, y - 60 - k * 120, 20, 20, '#ffffff'); ctx.restore(); }
     // табло

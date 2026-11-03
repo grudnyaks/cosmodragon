@@ -10,16 +10,21 @@ const load = f => vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8').repl
 const D = vm.runInContext('({LEVELS, PLANETS, LETTERS, LETTER_ORDER, VOWELS, READ_WORDS, NUM_NOM, ACH, ASTRO_PHRASES, ROCKET_PHRASES, REST_TIPS, NYAM_SLIDES, POP_COLORS, NUM_GEN, CONSTELLATIONS, PIXEL_PICS: typeof PIXEL_PICS !== "undefined" ? PIXEL_PICS : null, numWord, tensWord, NUM_UNITS})', ctx);
 const VoiceNorm = require(path.join(ROOT, 'web', 'js', 'voice_norm.js'));
 
+// Номера фраз постоянные: tools/voice/ids.json (ключ → номер). Новые фразы получают следующий свободный номер раздела.
+const IDS_FILE = path.join(__dirname, 'ids.json');
+const OLD = fs.existsSync(IDS_FILE) ? JSON.parse(fs.readFileSync(IDS_FILE, 'utf8')) : {};
+const maxId = {}; for (const k in OLD) { const id = +OLD[k].id, n = Math.floor(id / 1000); maxId[n] = Math.max(maxId[n] || n * 1000, id); }
 const out = [], byKey = {};
-let sec = null, sub = null, next = 0;
-function section(n, title) { sec = { n, title, subs: [] }; out.push(sec); next = n * 1000 + 1; }
+let sec = null, sub = null;
+function section(n, title) { sec = { n, title, subs: [] }; out.push(sec); }
+function newId(n) { maxId[n] = (maxId[n] || n * 1000) + 1; return String(maxId[n]).padStart(4, '0'); }
 function group(title) { sub = { title, items: [] }; sec.subs.push(sub); }
 // add(текст для актёра, {role, note, keys: [доп. ключи], game: текст как в игре})
 function add(text, o = {}) {
   const game = o.game || text;
   const k = VoiceNorm.norm(game);
   if (byKey[k]) return byKey[k];
-  const it = { id: String(next++).padStart(4, '0'), role: o.role || 'Рассказчик', text, note: o.note || '', keys: [k].concat((o.keys || []).map(VoiceNorm.norm)) };
+  const old = OLD[k], it = { id: old ? old.id : newId(sec.n), isNew: !old, role: o.role || 'Рассказчик', text, note: o.note || '', keys: [k].concat((o.keys || []).map(VoiceNorm.norm)) };
   for (const kk of it.keys) byKey[kk] = it;
   sub.items.push(it); return it;
 }
@@ -89,19 +94,18 @@ D.ROCKET_PHRASES.forEach(t => add(t, { role: 'Бортовой компьюте�
 group('Воришка (планета Радуга)');
 ['Хи-хи-хи! Сейчас стащу вкусняшки!', 'Хи-хи-хи! Мои вкусняшки! Догони, если сможешь!', 'Ой-ой! Убегаю!', 'Не трогай мои вкусняшки! Ой, то есть твои!', 'Эх, поймали!'].forEach(t => add(t, { role: 'Воришка', note: 'Хитро, с хихиканьем' }));
 add('Ура! Ты отобрал вкусняшки обратно!');
-group('Змей (планета Джунгария)');
+group('Змей похищает дракончика (на любой планете)');
 add('Ой! Кто это шипит в кустах?');
-add('Злой Змей схватил Листика! Нужно его спасти! Выигрывай игры в джунглях и найди три ключа.');
-add('Листика похитил Змей! Выигрывай игры, чтобы найти три ключа.');
-add('Листика нет дома! Его похитил Змей. Найди три ключа, чтобы его спасти!');
-add('Все ключи найдены! Нажми на кнопку, чтобы спасти Листика!');
+P.forEach(p => add('Злой Змей схватил ' + p.dragon.acc + '! Нужно его спасти! Выигрывай игры и найди три ключа.'));
+P.forEach(p => add('Змей похитил ' + p.dragon.acc + '! Выигрывай игры, чтобы найти три ключа.'));
+P.forEach(p => add('Все ключи найдены! Нажми на кнопку, чтобы спасти ' + p.dragon.acc + '!'));
 
 // ===== 3. Мини-игры: собираются из кода автоматически =====
 section(3, 'Мини-игры');
-const GAME_FILES = [['scene_treasure.js', 'Сокровища'], ['scene_puzzle.js', 'Пазлы'], ['scene_match3.js', 'Три в ряд'], ['scene_route.js', 'Маршруты'], ['scene_catch.js', 'Лови вкусняшки'],
+const GAME_FILES = [['scene_treasure.js', 'Сокровища'], ['scene_puzzle.js', 'Пазлы'], ['scene_catch.js', 'Лови вкусняшки'],
   ['scene_memory.js', 'Найди пару'], ['scene_simon.js', 'Поющие кристаллы'], ['scene_stars.js', 'Звёздные дорожки'], ['scene_bunny.js', 'Космо-зайчики'], ['scene_bowling.js', 'Боулинг'],
-  ['scene_maze.js', 'Лабиринт'], ['scene_flyer.js', 'Полёт'], ['scene_pop.js', 'Пузырьки'], ['scene_sort.js', 'Сортировка'], ['scene_fishing.js', 'Рыбалка'], ['scene_catapult.js', 'Катапульта'],
-  ['scene_tower.js', 'Облачная башня'], ['scene_iceslide.js', 'Ледяная горка'], ['scene_pixel.js', 'Раскраска по цифрам'], ['scene_snake.js', 'Змейка Лиана'], ['scene_serpent.js', 'Битва со Змеем']];
+  ['scene_maze.js', 'Лабиринт'], ['scene_pop.js', 'Пузырьки'], ['scene_sort.js', 'Сортировка'], ['scene_fishing.js', 'Рыбалка'], ['scene_catapult.js', 'Катапульта'],
+  ['scene_tower.js', 'Облачная башня'], ['scene_pixel.js', 'Раскраска по цифрам'], ['scene_rescue.js', 'Спасение дракончика']];
 function literals(file) {
   const src = fs.readFileSync(path.join(JS, file), 'utf8'), res = [];
   let i = 0;
@@ -112,6 +116,7 @@ function literals(file) {
     for (const m of arg.matchAll(/'([^']*)'/g)) { const t = m[1].trim(); if (/[А-Яа-яЁё]/.test(t) && /^[А-ЯЁ]/.test(t) && /[.!?]$/.test(t)) res.push(t); }
     i = j;
   }
+  for (const m of src.matchAll(/this\.win\('([^']*)'\)/g)) res.push(m[1]);
   for (const m of src.matchAll(/(?:this\.say|const say) = ([^;]*);/g)) for (const q of m[1].matchAll(/'([^']*)'/g)) { const t = q[1].trim(); if (/^[А-ЯЁ]/.test(t) && /[.!?]$/.test(t)) res.push(t); }
   return res;
 }
@@ -129,7 +134,7 @@ for (const [f, title] of GAME_FILES) {
   if (f === 'scene_bowling.js') add('Нужно сбить…', { game: 'Нужно сбить', note: CHUNK + 'число кеглей' });
   if (f === 'scene_stars.js') D.CONSTELLATIONS.forEach(c => add('Ура! Это ' + c.name + '!'));
   if (f === 'scene_pixel.js') { (D.PIXEL_PICS || []).forEach(c => add('Ура! Это ' + c.name + '!')); add('Какая красота!'); }
-  if (f === 'scene_snake.js') add('В стенки не врезайся!');
+  if (f === 'scene_rescue.js') add('Ты настоящий герой!');
 }
 
 // ===== 4. Школа дракона =====
@@ -181,4 +186,10 @@ fs.mkdirSync(path.join(ROOT, 'web', 'voice'), { recursive: true });
 const map = {}; for (const it of all) for (const k of it.keys) map[k] = it.id;
 fs.writeFileSync(path.join(ROOT, 'web', 'voice', 'phrases.json'), JSON.stringify(map));
 fs.writeFileSync(path.join(__dirname, 'script.json'), JSON.stringify(out, null, 1));
+const nowIds = new Set(all.map(i => i.id)), removed = [];
+for (const k in OLD) if (!nowIds.has(OLD[k].id) && !removed.some(r => r.id === OLD[k].id)) removed.push(OLD[k]);
+removed.sort((a, b) => a.id.localeCompare(b.id));
+fs.writeFileSync(path.join(__dirname, 'changes.json'), JSON.stringify({ added: all.filter(i => i.isNew).map(i => ({ id: i.id, text: i.text, role: i.role })), removed }, null, 1));
+if (process.argv.includes('--save-ids')) { const ids = { ...OLD }; for (const it of all) ids[it.keys[0]] = { id: it.id, text: it.text }; fs.writeFileSync(IDS_FILE, JSON.stringify(ids)); }
+console.log('added', all.filter(i => i.isNew).length, 'removed', removed.length);
 console.log('phrases:', all.length, out.map(s => s.n + ':' + s.subs.reduce((a, g) => a + g.items.length, 0)).join(' '));

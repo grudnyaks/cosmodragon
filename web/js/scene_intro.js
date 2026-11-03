@@ -7,6 +7,7 @@ const NYAM_SLIDES = [
   { kind: 'peek', text: 'Из кустов выглянул маленький дракончик Дракоша. Он был грустный и голодный: метеоритная буря разбросала все вкусняшки.' },
   { kind: 'friends', text: 'Космонавт угостил дракончика вкусняшкой. Мур-р-р! Так они стали друзьями.' },
   { kind: 'beacon', text: 'Видишь Звёздный маяк? Буря его погасила. Корми Дракошу — он вырастет большим и снова зажжёт маяк! А луч маяка покажет дорогу к новым планетам.' },
+  { kind: 'serpent', text: 'Но берегись: по планетам ползает злой Змей. Он похищает подросших дракончиков! Если такое случится — выигрывай игры, найди три ключа и спаси друга.' },
 ];
 G.scenes.intro = {
   enter(args) {
@@ -22,7 +23,7 @@ G.scenes.intro = {
   },
   say() { Voice.say(this.slides[this.i].text); },
   next() {
-    this.i++; this.st = 0; this.dust = false; this.purred = false;
+    this.i++; this.st = 0; this.dust = false; this.purred = false; this.hissed = false;
     if (this.i >= this.slides.length) { S.data.introSeen = true; PS().visited = true; S.save(); Voice.stop(); G.go('home'); return; }
     Sound.whoosh();
     this.say();
@@ -76,6 +77,13 @@ G.scenes.intro = {
           Art.astronaut(ctx, 520, 610, 1.1, { t, holding: eat ? null : 0, anim: eat ? 'cheer' : 'wave', at: st });
           Art.dragon(ctx, 740, 600, 0.8, { t, planet: 'nyam', level: 1, look: -0.5, happy: eat, mouth: !eat && st > 0.6 ? 0.8 : (eat && st < 2 ? Math.abs(Math.sin(st * 12)) * 0.5 : 0), squash: eat ? Math.sin(st * 10) * 0.2 * Math.max(0, 1 - (st - 1.2)) : 0 });
           if (eat && !this.purred) { this.purred = true; Sound.chomp(); setTimeout(() => Sound.purr(2, { planet: 'nyam' }), 500); }
+        } else if (s.kind === 'serpent') {
+          Art.astronaut(ctx, 470, 610, 1.1, { t, look: 1, anim: st > 2 ? 'salute' : 'idle', at: st });
+          Art.dragon(ctx, 660, 600, 0.75, { t, planet: 'nyam', level: 2, look: 1, tilt: -0.1, blink: (t % 3 < 0.15) ? 1 : 0 });
+          const hx = M.lerp(1400, 900, M.clamp(st / 2, 0, 1)), pts = [];
+          for (let i = 0; i < 24; i++) pts.push([hx + i * 26, 470 + Math.sin(t * 3 - i * 0.5) * 18]);
+          Art.serpent(ctx, pts, t, { open: Math.sin(t * 3) > 0.4, r: 36 });
+          if (st > 1 && !this.hissed) { this.hissed = true; Sound.hiss(); }
         } else if (s.kind === 'beacon') {
           Art.astronaut(ctx, 560, 610, 1.1, { t, look: 1 });
           Art.dragon(ctx, 760, 600, 0.8, { t, planet: 'nyam', level: 1, look: 1, blink: (t % 4 < 0.15) ? 1 : 0 });

@@ -4,7 +4,7 @@ G.scenes.catch = {
   enter() {
     const lvl = GL('catch');
     this.goal = Math.min(16 + lvl * 3, 40);
-    this.got = 0; this.won = false; this.lost = false; this.lives = 3;
+    this.got = 0; this.won = false; this.lost = false; this.lives = this.maxLives = hasAbility('shield2') ? 4 : 3;
     this.meteorP = Math.min(0.18 + lvl * 0.03, 0.4);
     this.gap = Math.max(0.45, 1.05 - lvl * 0.06);
     this.items = []; this.spawnT = 0.8;
@@ -60,7 +60,7 @@ G.scenes.catch = {
   },
   lose() {
     this.lost = true; this.items.length = 0;
-    Voice.say('Ой-ой, три раза ударился! Дракончик устал. Попробуй ещё раз!');
+    Voice.say('Ой! Дракончик устал. Попробуй ещё раз!');
     UI.reward(Math.floor(this.got / 6), this.dr.x, 520);
     setTimeout(() => { this.again.hidden = false; }, 1200);
   },
@@ -92,7 +92,7 @@ G.scenes.catch = {
     UI.progress(ctx, 440, 26, 400, 46, this.got / this.goal, '#ff7eb6');
     Art.treat(ctx, 0, 440, 48, 0.6);
     UI.text(ctx, this.got + ' / ' + this.goal, 640, 50, 30, '#fff', 'center', true);
-    for (let i = 0; i < 3; i++) Art.heart(ctx, 900 + i * 50, 52, 44, i < this.lives ? '#ff3b5c' : 'rgba(255,255,255,0.25)');
+    for (let i = 0; i < this.maxLives; i++) Art.heart(ctx, 900 + i * 50, 52, 44, i < this.lives ? '#ff3b5c' : 'rgba(255,255,255,0.25)');
   },
   drawTop(ctx) { UI.drawCounterTopRight(ctx); if ((this.won || this.lost) && !this.again.hidden) UI.text(ctx, 'Ещё раз?', 640, 235, 48, '#fff', 'center', true); },
 };

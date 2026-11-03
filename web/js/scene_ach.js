@@ -17,9 +17,35 @@ G.scenes.ach = {
     this.voiceBtn = UI.add(this, { x: 845, y: 330, w: 300, h: 64, label: '', fontSize: 26, color: '#38d6c3', onTap: () => { S.data.voice = !S.data.voice; S.save(); this.refresh(); } });
     this.updBtn = UI.add(this, { x: 640, y: 640, w: 420, h: 64, label: 'Проверить обновления', fontSize: 26, color: '#41d982',
       onTap: () => { if (window.Android && Android.checkUpdates) { Android.checkUpdates(); this.msg = 'Проверяю…'; setTimeout(() => this.readInfo(), 4000); } else this.msg = 'Доступно только в приложении'; } });
-    this.setBtns.push(this.musicBtn, this.voiceBtn, this.updBtn);
+    this.resetBtn = UI.add(this, { x: 1105, y: 640, w: 290, h: 64, label: 'Сбросить прогресс', fontSize: 22, color: '#c8304a', onTap: () => this.openGate() });
+    this.setBtns.push(this.musicBtn, this.voiceBtn, this.updBtn, this.resetBtn);
+    // «взрослый» вопрос перед сбросом, чтобы ребёнок случайно не стёр игру
+    this.gate = null;
+    this.gateBtns = [0, 1, 2].map(i => UI.add(this, { x: 440 + i * 200, y: 430, w: 170, h: 80, label: '', fontSize: 34, color: '#8f6cf2', hidden: true, onTap: () => this.answerGate(i) }));
+    this.gateCancel = UI.add(this, { x: 640, y: 560, w: 260, h: 64, label: 'Отмена', fontSize: 26, color: '#41d982', hidden: true, onTap: () => this.closeGate() });
     this.readInfo(); this.msg = '';
     this.setTab(this.tab);
+  },
+  openGate() {
+    const a = M.ri(6, 9), b = M.ri(5, 9), r = a + b, opts = M.shuffle([r, r + M.pick([1, 2]), r - M.pick([1, 2, 3])]);
+    this.gate = { a, b, r, opts };
+    for (const btn of this.setBtns) btn.hidden = true;
+    this.tabA.hidden = this.tabL.hidden = this.tabS.hidden = true;
+    this.gateBtns.forEach((btn, i) => { btn.hidden = false; btn.label = String(opts[i]); });
+    this.gateCancel.hidden = false;
+  },
+  closeGate() {
+    this.gate = null;
+    this.gateBtns.forEach(btn => { btn.hidden = true; }); this.gateCancel.hidden = true;
+    this.tabA.hidden = this.tabL.hidden = this.tabS.hidden = false;
+    this.setTab('set');
+  },
+  answerGate(i) {
+    if (!this.gate) return;
+    if (this.gate.opts[i] !== this.gate.r) { Sound.boing(); this.closeGate(); this.msg = 'Ответ неверный — прогресс не стёрт.'; return; }
+    try { localStorage.removeItem(KEY); } catch (e) { }
+    Voice.stop();
+    location.reload();
   },
   readInfo() {
     this.info = null;
@@ -53,6 +79,12 @@ G.scenes.ach = {
   draw(ctx) {
     const t = G.t;
     World.calm(ctx, t, 0.6);
+    if (this.gate) {
+      UI.text(ctx, 'Стереть весь прогресс?', 640, 170, 40, '#fff', 'center', true);
+      UI.text(ctx, 'Все драконы, вкусняшки, достижения и успехи в школе пропадут. Отменить это нельзя.', 640, 235, 22, '#ffd6f0', 'center', false);
+      UI.text(ctx, 'Вопрос для взрослых: сколько будет ' + this.gate.a + ' + ' + this.gate.b + '?', 640, 330, 30, '#ffd23f', 'center', true);
+      return;
+    }
     if (this.tab === 'learn') return this.drawLearn(ctx, t);
     if (this.tab === 'ach') {
       UI.text(ctx, 'Получено: ' + Ach.count() + ' из ' + ACH.length, 1170, 64, 19, '#ffd6f0', 'center', true);
