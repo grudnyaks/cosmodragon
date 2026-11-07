@@ -51,6 +51,16 @@ const UI = {
     ctx.fillStyle = color || '#fff'; ctx.fillText(str, x, y);
     ctx.restore();
   },
+  // многострочный текст по центру точки (x, y)
+  wrap(ctx, str, x, y, maxW, size, color, lh) {
+    ctx.save(); ctx.font = 'bold ' + size + 'px ' + UI.font;
+    const words = String(str).split(' '), lines = []; let cur = '';
+    for (const w of words) { const test = cur ? cur + ' ' + w : w; if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test; }
+    if (cur) lines.push(cur);
+    ctx.restore();
+    lh = lh || size * 1.25;
+    lines.forEach((ln, k) => UI.text(ctx, ln, x, y + (k - (lines.length - 1) / 2) * lh, size, color, 'center', false));
+  },
   // счётчик вкусняшек в левом/правом верхнем углу
   counter(ctx, x, y, n, bump, pid) {
     const sc = 1 + (bump || 0) * 0.25;

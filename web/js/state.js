@@ -3,10 +3,11 @@
 const KEY = 'cosmodragon.save.v1';
 const S = {
   data: null,
-  planetDefaults() { return { treats: 0, level: 0, fed: 0, beacon: false, games: {}, keys: 0, serpent: 'none', visited: false, moved: false }; },
+  planetDefaults() { return { treats: 5, games: {}, visited: false }; },
+  villainDefaults() { return { taken: [], keys: 0, ch: 0, wins: 0, next: 3, rescues: 0, friend: false, seen: [] }; },
   defaults() {
     return {
-      v: 2, planet: 'nyam', unlocked: ['nyam'], planets: {},
+      v: 3, planet: 'nyam', planets: {}, buddy: 'dark', villain: this.villainDefaults(),
       music: true, voice: true, introSeen: false, diff: 4, breakMin: 0, playSec: 0, restUntil: 0,
       stats: {}, ach: {}, newAch: [],
     };
@@ -14,82 +15,58 @@ const S = {
   load() {
     let d = {};
     try { d = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { d = {}; }
-    if (!d.v) d = this.migrate(d);
+    if (d.v !== 3) d = this.migrate(d);
     this.data = Object.assign(this.defaults(), d);
-    for (const p of PLANETS) {
-      this.data.planets[p.id] = Object.assign(this.planetDefaults(), p.id === 'nyam' ? { level: 1, treats: 5 } : {}, this.data.planets[p.id] || {});
-    }
+    this.data.planet = 'nyam';
+    this.data.planets.nyam = Object.assign(this.planetDefaults(), this.data.planets.nyam || {});
+    this.data.villain = Object.assign(this.villainDefaults(), this.data.villain || {});
+    if (!DRAGON_BY_ID[this.data.buddy]) this.data.buddy = 'dark';
   },
-  // Перенос старого сохранения (версия 1) на планету Ням-Ням
+  // Старые сохранения (с планетами и ростом): переносим вкусняшки, настройки и статистику, сюжет начинается заново
   migrate(o) {
     if (!o || !Object.keys(o).length) return {};
     const d = this.defaults();
-    d.music = o.music !== false; d.voice = o.voice !== false; d.introSeen = !!o.introSeen;
-    d.planets.nyam = Object.assign(this.planetDefaults(), {
-      treats: o.treats || 0, level: Math.max(1, o.level || 1), fed: o.fed || 0, beacon: !!o.beacon, visited: true,
-      games: { treasure: o.treasure || 0, puzzle: o.puzzle || 0, match3: o.match || 0, route: o.route || 0, catch: o.catch || 0,
-        memory: o.memory || 0, simon: o.simon || 0, stars: o.stars || 0, bunny: o.bunny || 0 },
-    });
-    if (d.planets.nyam.beacon) d.unlocked.push('water');
+    d.music = o.music !== false; d.voice = o.voice !== false; d.introSeen = false;
+    d.diff = o.diff || 4; d.breakMin = o.breakMin || 0; d.stats = o.stats || {};
+    let treats = 5;
+    if (o.planets) { treats = 0; for (const k in o.planets) treats += (o.planets[k] && o.planets[k].treats) || 0; }
+    else if (o.treats) treats = o.treats;
+    d.planets.nyam = Object.assign(this.planetDefaults(), { treats: Math.max(5, treats), games: (o.planets && o.planets.nyam && o.planets.nyam.games) || {} });
     return d;
   },
   save() { try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { } },
   addTreats(n) { PS().treats += n; if (n > 0) stat('treats', n); this.save(); },
 };
 
-// Текущая планета (описание) и её сохранение
-function P() { return PLANET_BY_ID[S.data.planet] || PLANETS[0]; }
-function PS(id) { return S.data.planets[id || S.data.planet]; }
-// Уровень сложности игры: число побед + сложность из настроек + номер планеты
-function GL(key) { return (PS().games[key] || 0) + S.data.diff + P().order; }
+// Текущая планета (всегда Ням-Ням) и её сохранение
+function P() { return PLANETS[0]; }
+function PS() { return S.data.planets.nyam; }
+function V() { return S.data.villain; }
+function isTaken(id) { return V().taken.includes(id); }
+// Дракончик-напарник в мини-играх: тот, кого гладили последним, если он не у Змея
+function buddy() {
+  const b = S.data.buddy;
+  if (!isTaken(b)) return b;
+  const other = DRAGONS.find(d => !isTaken(d.id));
+  return other ? other.id : b;
+}
+// Уровень сложности игры: число побед + сложность из настроек
+function GL(key) { return (PS().games[key] || 0) + S.data.diff; }
 function GW(key) {
-  const ps = PS(), g = ps.games; g[key] = (g[key] || 0) + 1;
-  // пока дракончик этой планеты у Змея, каждая победа приносит ключ
-  if (ps.serpent === 'kidnapped' && ps.keys < 3) {
-    ps.keys++;
-    if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + ps.keys + ' из 3', 'key'), 1600);
-  }
-  // за каждую победу дракончик этой планеты сам подрастает на 1
-  if (ps.level < MAX_LEVEL && ps.serpent !== 'kidnapped' && (ps.level > 0 || ps.visited)) ps.fed++;
+  const g = PS().games, v = V(); g[key] = (g[key] || 0) + 1;
+  // пока дракончики у Змея, каждая победа приносит ключ
+  if (v.taken.length && v.keys < 3) {
+    v.keys++;
+    if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + v.keys + ' из 3', 'key'), 1600);
+  } else if (!v.taken.length) v.wins++;
   stat('wins', 1); S.save();
 }
 function stat(k, n) {
   const st = S.data.stats; st[k] = (st[k] || 0) + (n == null ? 1 : n);
   if (typeof Ach !== 'undefined') Ach.check();
 }
-
-// Рост дракона. Уровень 0 — яйцо. need — сколько вкусняшек нужно на этом уровне.
-const LEVELS = [
-  { need: 4, title: 'Яйцо' },
-  { need: 5, title: 'Малыш' },
-  { need: 6, title: 'Крылышки', skill: 'wings', icon: 'wing', short: 'Показывает, куда покатится шар, в «Боулинге»',
-    ability: 'У дракончика выросли крылышки! Теперь он подсказывает, куда покатится шар.' },
-  { need: 7, title: 'Сияние', skill: 'glow', icon: 'glow', short: 'Подсказывает, где сундук, в «Сокровищах»',
-    ability: 'Дракончик научился светиться! Теперь он подсказывает, где спрятан сундук, и освещает лабиринт.' },
-  { need: 8, title: 'Огонёк', skill: 'fire', icon: 'fire', short: 'Лишний огненный шар в «Катапульте»',
-    ability: 'В дракончике зажёгся огонёк! Теперь у тебя больше огненных шаров.' },
-  { need: 9, title: 'Быстрые лапки', skill: 'paws', icon: 'paw', short: 'Быстрее бегает и шире ловит',
-    ability: 'У дракончика быстрые лапки! Теперь он быстрее бегает и ловит больше вкусняшек.' },
-  { need: 10, title: 'Хвостик-магнит', skill: 'magnet', icon: 'magnet', short: 'Притягивает вкусняшки в «Лови вкусняшки»',
-    ability: 'Хвостик стал магнитом! Теперь дракончик притягивает вкусняшки.' },
-  { need: 11, title: 'Зоркие глазки', skill: 'eyes', icon: 'eye', short: 'Показывает все карточки в «Найди пару»',
-    ability: 'У дракончика зоркие глазки! Он подсказывает в играх на внимание.' },
-  { need: 12, title: 'Крепкий щит', skill: 'shield2', icon: 'shield', short: 'Лишнее сердечко в «Лови вкусняшки» и «Рыбалке»',
-    ability: 'Дракончик стал сильнее! Теперь у тебя есть лишнее сердечко.' },
-  { need: 14, title: 'Большой огонь', skill: 'bigfire', icon: 'bigfire', short: 'Огромные огненные шары в «Катапульте»',
-    ability: 'Огонь дракончика стал большим! Теперь огненные шары огромные.' },
-  { need: 0, title: 'Звёздный дракон', skill: 'star', icon: 'star', short: 'Зажигает маяк планеты',
-    ability: 'Дракончик стал настоящим Звёздным драконом! Теперь он может зажечь маяк!' },
-];
-const MAX_LEVEL = 10;
-const SERPENT_LEVEL = 3; // на этом уровне Змей похищает дракончика
-const SKILL_LEVEL = {};
-LEVELS.forEach((l, i) => { if (l.skill) SKILL_LEVEL[l.skill] = i; });
-function levelNeed(lvl, pid) { const pd = PLANET_BY_ID[pid] || P(); return Math.max(1, Math.round(LEVELS[Math.min(lvl, MAX_LEVEL)].need * pd.mult)); }
-function hasAbility(name) {
-  if (name === 'big') name = 'star';
-  return SKILL_LEVEL[name] != null && PS().level >= SKILL_LEVEL[name];
-}
+// Роста больше нет: умения выключены, игры работают в обычном режиме
+function hasAbility() { return false; }
 
 // Озвучка текста (Android TTS через мост, иначе браузерная)
 const Voice = {

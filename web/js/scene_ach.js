@@ -5,9 +5,9 @@ G.scenes.ach = {
   enter(args) {
     this.tab = args.tab || 'ach';
     UI.homeButton(this);
-    this.tabA = UI.add(this, { x: 380, y: 64, w: 260, h: 66, label: 'Достижения', fontSize: 26, color: '#8f6cf2', onTap: () => this.setTab('ach') });
-    this.tabL = UI.add(this, { x: 650, y: 64, w: 260, h: 66, label: 'Успехи', fontSize: 26, color: '#5a5a7a', onTap: () => this.setTab('learn') });
-    this.tabS = UI.add(this, { x: 920, y: 64, w: 260, h: 66, label: 'Для взрослых', fontSize: 26, color: '#5a5a7a', onTap: () => this.setTab('set') });
+    this.tabA = UI.add(this, { x: 500, y: 64, w: 260, h: 66, label: 'Достижения', fontSize: 26, color: '#8f6cf2', onTap: () => this.setTab('ach') });
+    this.tabL = { hidden: true };
+    this.tabS = UI.add(this, { x: 780, y: 64, w: 260, h: 66, label: 'Для взрослых', fontSize: 26, color: '#5a5a7a', onTap: () => this.setTab('set') });
     this.setBtns = [];
     DIFFS.forEach(([v, name], i) => this.setBtns.push(UI.add(this, { x: 330 + i * 210, y: 230, w: 196, h: 64, label: name, fontSize: name.length > 8 ? 22 : 26, color: '#5a5a7a', diff: v,
       onTap: () => { S.data.diff = v; S.save(); this.refresh(); } })));
@@ -37,7 +37,7 @@ G.scenes.ach = {
   closeGate() {
     this.gate = null;
     this.gateBtns.forEach(btn => { btn.hidden = true; }); this.gateCancel.hidden = true;
-    this.tabA.hidden = this.tabL.hidden = this.tabS.hidden = false;
+    this.tabA.hidden = this.tabS.hidden = false;
     this.setTab('set');
   },
   answerGate(i) {
@@ -56,7 +56,6 @@ G.scenes.ach = {
     this.tab = tab;
     this.tabA.color = tab === 'ach' ? '#8f6cf2' : '#5a5a7a';
     this.tabS.color = tab === 'set' ? '#8f6cf2' : '#5a5a7a';
-    this.tabL.color = tab === 'learn' ? '#8f6cf2' : '#5a5a7a';
     for (const b of this.setBtns) b.hidden = tab !== 'set';
     this.refresh();
   },
@@ -81,11 +80,10 @@ G.scenes.ach = {
     World.calm(ctx, t, 0.6);
     if (this.gate) {
       UI.text(ctx, 'Стереть весь прогресс?', 640, 170, 40, '#fff', 'center', true);
-      UI.text(ctx, 'Все драконы, вкусняшки, достижения и успехи в школе пропадут. Отменить это нельзя.', 640, 235, 22, '#ffd6f0', 'center', false);
+      UI.text(ctx, 'Вкусняшки, достижения и история с Шипуном начнутся заново. Отменить это нельзя.', 640, 235, 22, '#ffd6f0', 'center', false);
       UI.text(ctx, 'Вопрос для взрослых: сколько будет ' + this.gate.a + ' + ' + this.gate.b + '?', 640, 330, 30, '#ffd23f', 'center', true);
       return;
     }
-    if (this.tab === 'learn') return this.drawLearn(ctx, t);
     if (this.tab === 'ach') {
       UI.text(ctx, 'Получено: ' + Ach.count() + ' из ' + ACH.length, 1170, 64, 19, '#ffd6f0', 'center', true);
       ACH.forEach((a, i) => {
@@ -115,25 +113,6 @@ G.scenes.ach = {
       lines.forEach((ln, i) => UI.text(ctx, ln, 640, 474 + i * 38, 20, i === 3 ? '#ffb3c8' : '#fff', 'center', false));
       if (this.msg) UI.text(ctx, this.msg, 640, 700, 22, '#ffd23f', 'center', true);
     }
-  },
-  // успехи в обучении: какие буквы и цифры ребёнок знает, а какие путает
-  drawLearn(ctx, t) {
-    const col = (kind, k, open) => { if (!open) return 'rgba(80,60,130,0.5)'; const r = Learn.data()[kind][k]; if (!r || !(r.ok + r.bad)) return '#9a8ac0'; if (r.bad > r.ok) return '#ff6f8a'; return Learn.known(kind, k) ? '#41d982' : '#ffd23f'; };
-    UI.text(ctx, 'Буквы', 640, 128, 30, '#fff', 'center', true);
-    const openL = LETTER_ORDER.slice(0, Learn.data().openL);
-    ALPHABET.forEach((L, i) => { const x = 175 + (i % 11) * 93, y = 180 + Math.floor(i / 11) * 82;
-      Art.rr(ctx, x - 38, y - 34, 76, 68, 16); ctx.fillStyle = col('L', L, openL.includes(L)); ctx.fill(); Art.stroke(ctx, 3);
-      UI.text(ctx, L, x, y + 2, 40, '#ffffff', 'center', true); });
-    UI.text(ctx, 'Цифры', 640, 452, 30, '#fff', 'center', true);
-    NUMBERS.forEach((n, i) => { const x = 175 + i * 93, y = 505;
-      Art.rr(ctx, x - 38, y - 34, 76, 68, 16); ctx.fillStyle = col('N', n, n <= Learn.data().openN); ctx.fill(); Art.stroke(ctx, 3);
-      UI.text(ctx, String(n), x, y + 2, 40, '#ffffff', 'center', true); });
-    const legend = [['#41d982', 'знает'], ['#ffd23f', 'учит'], ['#ff6f8a', 'путает'], ['#9a8ac0', 'ещё не спрашивали'], ['rgba(80,60,130,0.5)', 'откроется позже']];
-    const lx = [170, 320, 460, 630, 900]; legend.forEach(([c, s], i) => { Art.ell(ctx, lx[i], 590, 13, 13, c); Art.stroke(ctx, 2); UI.text(ctx, s, lx[i] + 20, 591, 19, '#fff', 'left', false); });
-    const trouble = ALPHABET.filter(L => { const r = Learn.data().L[L]; return r && r.bad > r.ok; }).concat(NUMBERS.filter(n => { const r = Learn.data().N[n]; return r && r.bad > r.ok; }).map(String));
-    UI.text(ctx, (trouble.length ? 'Стоит повторить: ' + trouble.join(', ') : 'Путаницы пока нет — молодец!') + '   ·   Уроков пройдено: ' + Learn.data().sessions, 640, 640, 22, '#ffe9a0', 'center', true);
-    const D = Learn.data(), syl = Object.values(D.S || {}).filter(r => r.ok > r.bad).length, words = Object.values(D.W || {}).filter(r => r.ok > 0).length;
-    UI.text(ctx, 'Написал знаков: ' + Object.keys(D.T || {}).length + ' из 43  ·  Читает слогов: ' + syl + '  ·  Прочитал слов: ' + words + '  ·  Считает до ' + (D.openC || 20), 640, 680, 21, '#ffffff', 'center', true);
   },
   drawTop(ctx) { },
 };

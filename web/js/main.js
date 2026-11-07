@@ -32,16 +32,16 @@ G.go = function (name, args) {
 window.onAppPause = function () { Sound.pause(); };
 window.onAppResume = function () { Sound.resume(); };
 
-// для отладки в браузере: ?reset, ?scene=match3, ?planet=fire, ?treats=50, ?level=3, ?mute
+// для отладки в браузере: ?reset, ?scene=maze, ?treats=50, ?wins=3 (Шипун придёт), ?ch=2, ?mute
 const qs = new URLSearchParams(location.search);
 if (qs.has('reset')) { localStorage.removeItem(KEY); S.load(); }
-if (qs.has('planet')) { const p = qs.get('planet'); S.data.planet = p; if (!S.data.unlocked.includes(p)) S.data.unlocked.push(p); PS().visited = true; }
 if (qs.has('treats')) PS().treats = +qs.get('treats');
-if (qs.has('level')) PS().level = +qs.get('level');
+if (qs.has('wins')) V().wins = +qs.get('wins');
+if (qs.has('ch')) V().ch = +qs.get('ch');
 if (qs.has('diff')) S.data.diff = +qs.get('diff');
 if (qs.has('mute')) S.data.voice = false;
 S.save();
 
 const first = qs.get('scene') || (S.data.restUntil > Date.now() ? 'rest' : S.data.introSeen ? (PS().visited ? 'home' : 'intro') : 'intro');
-G.start(first, { planet: S.data.planet });
+G.start(first, {});
 G.run();

@@ -1,4 +1,4 @@
-// Планеты: оформление, дракон, вкусняшки, игры и сюжет каждой планеты
+// Планета Ням-Ням: оформление, два дракончика, вкусняшки и 12 мини-игр
 'use strict';
 // g(scene, icon, color, title) — игра на планете; scene — механика, title — название на этой планете
 const g = (scene, icon, color, title, hint) => ({ scene, icon, color, title, hint });
@@ -15,115 +15,24 @@ const PLANETS = [
     treats: ['cupcake', 'cookie', 'candy', 'donut', 'starpop', 'strawberry'],
     games: [
       g('treasure', 'map', '#ffb23a', 'Сокровища'), g('puzzle', 'puzzle', '#3fb8ff', 'Пазлы'), g('catch', 'catch', '#41d982', 'Лови вкусняшки'),
-      g('memory', 'memory', '#ff9a3c', 'Найди пару'), g('bowling', 'bowling', '#8f6cf2', 'Конфетный боулинг'),
+      g('memory', 'memory', '#ff9a3c', 'Найди пару'), g('bowling', 'bowling', '#8f6cf2', 'Конфетный боулинг'), g('maze', 'maze', '#1f7fd0', 'Лабиринт'),
+      g('pop', 'pop', '#ff7eb6', 'Пузырьки'), g('fishing', 'fishing', '#1fa0d0', 'Рыбалка'), g('simon', 'crystals', '#38d6c3', 'Поющие кристаллы'),
+      g('stars', 'constellation', '#3a5ad8', 'Звёздные дорожки'), g('bunny', 'bunny', '#ffb23a', 'Космо-зайчики'), g('tower', 'tower', '#7ec0ff', 'Облачная башня'),
     ],
     intro: null,
   },
-  {
-    id: 'water', order: 1, name: 'Аквария', of: 'планеты Аквария', mult: 1.05,
-    sky: ['#06306b', '#1f7fd0', '#8ee8ff'], ground: ['#f3dca0', '#e3c27a', '#c99d55'], mount: '#2a9fd8', mount2: '#1c7fb8',
-    decor: 'sea', treatName: 'жемчужинки', obstacle: 'jelly', critter: 'fish', voice: 'water',
-    beacon: ['#38d6ff', '#1f6fd0'],
-    dragon: { name: 'Бульк', acc: 'Булька', body: '#2f9fe0', shade: '#1a6aa8', hi: '#7fd2ff', belly: '#d8fbff', bellyShade: '#9fe2f0',
-      horn: '#e8fbff', accent: '#3fe0c8', accent2: '#1fa596', iris1: '#7fffe0', iris2: '#0b6a7a', pattern: 'scales', patternColor: '#5cc0f5',
-      crest: 'fin', tail: 'fin', wing: 'fin', wingColor: '#38d6c3', wingMem: '#9ff5e6' },
-    treats: ['pearl', 'fishjelly', 'starfish', 'shell', 'jelly', 'bubbletea'],
-    games: [
-      g('fishing', 'fishing', '#1f7fd0', 'Рыбалка'), g('pop', 'pop', '#7ee8ff', 'Пузырьки-цифры'), g('maze', 'maze', '#1f7fd0', 'Подводный лабиринт'),
-      g('catch', 'catch', '#41d982', 'Поймай рыбок-мармеладок'), g('simon', 'crystals', '#38d6c3', 'Песня китов'),
-    ],
-    intro: ['Луч маяка показал дорогу, и ракета прилетела на планету Аквария. Здесь тёплое море, песчаные острова и жемчужные конфеты.',
-      'На берегу лежит голубое яйцо! Из него скоро вылупится водный дракончик Бульк. Согрей его жемчужинками!'],
-    beaconText: 'Маяк Акварии зажёгся! Его луч осветил путь к огненной планете.',
-  },
-  {
-    id: 'fire', order: 2, name: 'Вулкания', of: 'планеты Вулкания', mult: 1.1,
-    sky: ['#2a0a18', '#a8261c', '#ffb347'], ground: ['#5a3a3a', '#43292e', '#2c1a20'], mount: '#7a2a28', mount2: '#5a1e22',
-    decor: 'volcano', treatName: 'искорки', obstacle: 'lava', critter: 'sprite', voice: 'fire',
-    beacon: ['#ffb23a', '#ff4d2d'],
-    dragon: { name: 'Уголёк', acc: 'Уголька', body: '#e8432a', shade: '#a82418', hi: '#ff8a5c', belly: '#ffe08a', bellyShade: '#f5b84a',
-      horn: '#3a2020', accent: '#ffb23a', accent2: '#ff6a1a', iris1: '#fff27a', iris2: '#c0400a', pattern: 'stripes', patternColor: '#a82418',
-      crest: 'flame', tail: 'flame', wing: 'bat', wingColor: '#8a1e14', wingMem: '#ff7a3a' },
-    treats: ['pepper', 'lavapie', 'ember', 'spark', 'volcake', 'fireberry'],
-    games: [
-      g('catapult', 'catapult', '#ff6a1a', 'Огненная катапульта'), g('sort', 'sort', '#41d982', 'Остуди камушки'), g('stars', 'constellation', '#3a5ad8', 'Огненные созвездия'),
-      g('bunny', 'bunny', '#ffb23a', 'Огоньки-прыгунки'), g('treasure', 'map', '#ff9a3c', 'Сундук в пепле'),
-    ],
-    intro: ['Ракета прилетела на огненную планету Вулкания. Здесь дымятся вулканы, текут лавовые реки и растут огненные перчики-карамельки.',
-      'Между камнями лежит горячее красное яйцо. Это огненный дракончик Уголёк! Согрей его искорками.'],
-    beaconText: 'Маяк Вулкании зажёгся! Его луч полетел к ветреной планете в облаках.',
-  },
-  {
-    id: 'wind', order: 3, name: 'Эолия', of: 'планеты Эолия', mult: 1.15,
-    sky: ['#3a7ad8', '#8ec5ff', '#e8f6ff'], ground: ['#9be37a', '#6fc35a', '#4a9a48'], mount: '#c8e4ff', mount2: '#a6d0f5',
-    decor: 'sky', treatName: 'облачка', obstacle: 'storm', critter: 'bird', voice: 'wind',
-    beacon: ['#ffffff', '#7ec0ff'],
-    dragon: { name: 'Ветерок', acc: 'Ветерка', body: '#f2f0ff', shade: '#bdb6e8', hi: '#ffffff', belly: '#d9f2ff', bellyShade: '#a9d4f0',
-      horn: '#8ec5ff', accent: '#9fd8ff', accent2: '#6aa8e8', iris1: '#9ff0ff', iris2: '#2a6ad8', pattern: 'swirl', patternColor: '#b8d8ff',
-      crest: 'feather', tail: 'cloud', wing: 'feather', wingColor: '#ffffff', wingMem: '#d6ecff' },
-    treats: ['cottoncandy', 'marsh', 'feather', 'balloon', 'pinwheel', 'dandelion'],
-    games: [
-      g('tower', 'tower', '#7ec0ff', 'Облачная башня'), g('pop', 'pop', '#ff7eb6', 'Воздушные шарики'), g('puzzle', 'puzzle', '#3fb8ff', 'Облачные картинки'),
-      g('stars', 'constellation', '#3a5ad8', 'Созвездия ветра'), g('catch', 'catch', '#41d982', 'Лови облачка'),
-    ],
-    intro: ['Ракета взлетела высоко-высоко, на планету Эолия. Тут парят острова, крутятся мельницы и дует весёлый ветер.',
-      'В облачном гнезде лежит пушистое белое яйцо. Это ветряной дракончик Ветерок! Согрей его облачками.'],
-    beaconText: 'Маяк Эолии зажёгся! Его луч долетел до ледяной планеты.',
-  },
-  {
-    id: 'ice', order: 4, name: 'Кристаллия', of: 'планеты Кристаллия', mult: 1.2,
-    sky: ['#0a1a4a', '#2a5aa8', '#a8e8ff'], ground: ['#f4fbff', '#d6ecfa', '#b0d4ee'], mount: '#8ec5ef', mount2: '#6aa8d8',
-    decor: 'ice', treatName: 'мороженки', obstacle: 'icicle', critter: 'penguin', voice: 'ice',
-    beacon: ['#bff5ff', '#4fb7ff'],
-    dragon: { name: 'Снежок', acc: 'Снежка', body: '#8fd8ff', shade: '#4f9fd8', hi: '#d8f6ff', belly: '#ffffff', bellyShade: '#c6e4f8',
-      horn: '#7fd8ff', accent: '#a8f0ff', accent2: '#4fb7ff', iris1: '#c8f6ff', iris2: '#2a7ad8', pattern: 'frost', patternColor: '#ffffff',
-      crest: 'crystal', tail: 'snowflake', wing: 'bat', wingColor: '#7fbfe8', wingMem: '#d6f4ff' },
-    treats: ['icecream', 'snowcookie', 'icecrystal', 'popsicle', 'snowball', 'frostberry'],
-    games: [
-      g('sort', 'sort', '#41d982', 'Снежинки по цветам'), g('memory', 'memory', '#ff9a3c', 'Ледяные пары'), g('treasure', 'map', '#ffb23a', 'Клад подо льдом'),
-      g('bunny', 'bunny', '#38d6c3', 'Пингвинчики'), g('maze', 'maze', '#4fb7ff', 'Ледяной лабиринт'),
-    ],
-    intro: ['Брр! Ракета приземлилась на ледяной планете Кристаллия. Тут сверкают ледяные горы, а в небе танцует северное сияние.',
-      'В сугробе спряталось сверкающее голубое яйцо. Это ледяной дракончик Снежок! Согрей его мороженками.'],
-    beaconText: 'Маяк Кристаллии зажёгся! Его луч стал разноцветным и показал путь к радужной планете.',
-  },
-  {
-    id: 'rainbow', order: 5, name: 'Радуга', of: 'планеты Радуга', mult: 1.25,
-    sky: ['#5a3ac8', '#ff8ad8', '#ffe9a8'], ground: ['#ffb3e0', '#c89bff', '#8ec5ff'], mount: '#ffd0f0', mount2: '#e0b0ff',
-    decor: 'rainbow', treatName: 'радужинки', obstacle: 'blot', critter: 'unicorn', voice: 'rainbow', special: 'thief',
-    beacon: ['#ffffff', '#ff7eb6'],
-    dragon: { name: 'Радужка', acc: 'Радужку', body: '#fff0fa', shade: '#e6c2e8', hi: '#ffffff', belly: '#fff6d6', bellyShade: '#f5dca8',
-      horn: '#ffd23f', accent: '#ff7eb6', accent2: '#7ec0ff', iris1: '#ffb3f0', iris2: '#8a2ad8', pattern: 'hearts', patternColor: '#ffb3e0',
-      crest: 'mane', tail: 'rainbow', wing: 'bat', wingColor: '#c8a8ff', wingMem: '#ffd6f6' },
-    treats: ['swirlpop', 'rainbowstar', 'heartcandy', 'gummybear', 'rainbowjelly', 'dragee'],
-    games: [
-      g('pixel', 'pixel', '#ff7eb6', 'Пиксель-раскраска'), g('pop', 'pop', '#7ee8ff', 'Радужные шарики'), g('memory', 'memory', '#ff9a3c', 'Радужные пары'),
-      g('puzzle', 'puzzle', '#3fb8ff', 'Радужные пазлы'), g('simon', 'crystals', '#b07cff', 'Радужная мелодия'),
-    ],
-    intro: ['Ракета прилетела на планету Радуга. Здесь всё разноцветное: холмы, облака и даже дождик!',
-      'Под радугой лежит переливающееся яйцо. Это радужный дракончик Радужка! Только осторожно: тут бродит злой космонавт-воришка, он ворует вкусняшки. Если увидишь его — нажми на него, чтобы прогнать!'],
-    beaconText: 'Маяк Радуги зажёгся! Луч показал путь в далёкие джунгли.',
-  },
-  {
-    id: 'jungle', order: 6, name: 'Джунгария', of: 'планеты Джунгария', mult: 1.3,
-    sky: ['#0d3a2a', '#2f8a4a', '#c8f07a'], ground: ['#4caf50', '#2e8b3e', '#1e6a2e'], mount: '#2a7a4a', mount2: '#1e5a38',
-    decor: 'jungle', treatName: 'фрукты', obstacle: 'thorn', critter: 'monkey', voice: 'jungle', special: 'serpent',
-    beacon: ['#ffe14a', '#41d982'],
-    dragon: { name: 'Листик', acc: 'Листика', body: '#4cc85a', shade: '#2a8a3a', hi: '#8ef08a', belly: '#fff2a8', bellyShade: '#e8c860',
-      horn: '#8a5a2a', accent: '#ffdd3a', accent2: '#ff7eb6', iris1: '#ffe97a', iris2: '#5a8a0a', pattern: 'spots', patternColor: '#2f9a3e',
-      crest: 'leaf', tail: 'flower', wing: 'leaf', wingColor: '#3aa848', wingMem: '#9cf08a' },
-    treats: ['banana', 'mango', 'coconut', 'pineapple', 'grapes', 'watermelon'],
-    games: [
-      g('treasure', 'map', '#ffb23a', 'Клад в джунглях'), g('maze', 'maze', '#41d982', 'Тропинки джунглей'), g('catch', 'catch', '#ff9a3c', 'Лови фрукты'),
-      g('bunny', 'bunny', '#a8742a', 'Обезьянки'), g('stars', 'constellation', '#3a5ad8', 'Следы зверей'),
-    ],
-    intro: ['Ракета приземлилась в джунглях планеты Джунгария. Здесь огромные листья, лианы и сладкие фрукты.',
-      'В гнезде из листьев лежит зелёное яйцо. Это лесной дракончик Листик! Но берегись: в джунглях живёт злой Змей.'],
-    beaconText: 'Маяк Джунгарии зажёгся! Все маяки галактики горят. Ты — самый лучший друг драконов!',
-  },
 ];
+// Два дракончика Ням-Ням. Внешность — собственные дизайны игры.
+const DRAGONS = [
+  { id: 'dark', name: 'Дракоша', acc: 'Дракошу', gen: 'Дракоши', dat: 'Дракоше', voice: 'nyam',
+    body: '#2a2833', hi: '#5a5868', shade: '#121119', belly: '#3d3a48', bellyHi: '#6a6678', spot: '#8d8c9c', horn: '#efe2c4', hornShade: '#b59f78',
+    wing: '#24222c', wingMem: '#4a4658', iris: ['#d9c8ff', '#8a68e8', '#3a2490'], claw: '#efe2c4', tip: 'spade', marks: 'spots' },
+  { id: 'light', name: 'Пушок', acc: 'Пушка', gen: 'Пушка', dat: 'Пушку', voice: 'wind',
+    body: '#f3efe8', hi: '#ffffff', shade: '#b8b0c4', belly: '#fbf3df', bellyHi: '#fffaf0', spot: '#e3c17a', horn: '#e8c27a', hornShade: '#a8823c',
+    wing: '#e9e3ee', wingMem: '#f8eef4', iris: ['#ffe9a8', '#f0a640', '#8a4a10'], claw: '#d8b46a', tip: 'tuft', marks: 'freckles' },
+];
+const DRAGON_BY_ID = { dark: DRAGONS[0], light: DRAGONS[1] };
 const PLANET_BY_ID = {};
 PLANETS.forEach(p => { PLANET_BY_ID[p.id] = p; });
-function nextPlanet(id) { const p = PLANET_BY_ID[id]; return PLANETS[p.order + 1] || null; }
 
 S.load();

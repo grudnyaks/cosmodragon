@@ -1,20 +1,18 @@
-// Сюжетные вступления: для Ням-Ням — история знакомства, для остальных планет — прилёт и яйцо
+// Сюжетное вступление: космонавт, два дракончика и Змей Шипун
 'use strict';
 const NYAM_SLIDES = [
   { kind: 'space', text: 'Жил-был отважный космонавт. Однажды он полетел на своей ракете к далёким звёздам.' },
   { kind: 'meteors', text: 'Вдруг — метеоритный дождь! Ракета закружилась и полетела к незнакомой планете.' },
   { kind: 'land', text: 'Бум! Ракета приземлилась на планете Ням-Ням. Тут растут конфетные кусты и светятся грибы.' },
-  { kind: 'peek', text: 'Из кустов выглянул маленький дракончик Дракоша. Он был грустный и голодный: метеоритная буря разбросала все вкусняшки.' },
-  { kind: 'friends', text: 'Космонавт угостил дракончика вкусняшкой. Мур-р-р! Так они стали друзьями.' },
-  { kind: 'beacon', text: 'Видишь Звёздный маяк? Буря его погасила. Корми Дракошу — он вырастет большим и снова зажжёт маяк! А луч маяка покажет дорогу к новым планетам.' },
-  { kind: 'serpent', text: 'Но берегись: по планетам ползает злой Змей. Он похищает подросших дракончиков! Если такое случится — выигрывай игры, найди три ключа и спаси друга.' },
+  { kind: 'peek', text: 'Из кустов выглянули два маленьких дракончика: чёрный Дракоша и белый Пушок. Они были голодные: метеоритная буря разбросала все вкусняшки.' },
+  { kind: 'friends', text: 'Космонавт угостил дракончиков вкусняшками. Мур-р-р! Так они стали друзьями.' },
+  { kind: 'serpent', text: 'Но берегись! За конфетными холмами, в Тёмной пещере, живёт Змей Шипун. Он хочет утащить дракончиков к себе!' },
+  { kind: 'play', text: 'Играй в игры, собирай вкусняшки и корми дракончиков. А если Шипун кого-нибудь утащит — найди три ключа и спаси друзей!' },
 ];
 G.scenes.intro = {
   enter(args) {
-    this.pid = args.planet || S.data.planet;
-    if (this.pid !== S.data.planet) { S.data.planet = this.pid; S.save(); }
-    const pd = PLANET_BY_ID[this.pid];
-    this.slides = pd.intro ? [{ kind: 'land', text: pd.intro[0] }, { kind: 'egg', text: pd.intro[1] }] : NYAM_SLIDES;
+    this.pid = 'nyam';
+    this.slides = NYAM_SLIDES;
     this.i = 0; this.st = 0;
     this.meteors = [];
     for (let i = 0; i < 9; i++) this.meteors.push({ x: M.rnd(1300, 2400), y: M.rnd(-100, 700), r: M.rnd(14, 38), v: M.rnd(300, 520), rot: 0, seed: i + 3 });
@@ -51,46 +49,41 @@ G.scenes.intro = {
         Art.rocket(ctx, x, y, 0.55, { t, flame: 0.7, rot: st * 4, pilot: true });
       }
     } else {
-      World.bg(ctx, t, { planet: this.pid });
+      World.bg(ctx, t, { noBeacon: true });
       if (s.kind === 'land') {
         const k = Math.min(1, st / 2.2), y = M.lerp(-100, World.GROUND + 20, G.ease.outQuad(k));
         Art.rocket(ctx, 380, y, 0.75, { t, flame: k < 1 ? 1 : 0, glowBase: k >= 1, pilot: true });
         if (k >= 1 && !this.dust) { this.dust = true; G.burst(380, World.GROUND + 10, { kind: 'smoke', n: 20, colors: ['#ffffff', '#ffd6f0'], g: -20, speed: 200, size: 18 }); Sound.bump(); }
         if (k >= 1) Art.astronaut(ctx, 560, 610, 1.1, { t, anim: 'cheer', at: st });
-      } else if (s.kind === 'egg') {
-        Art.rocket(ctx, 200, World.GROUND + 20, 0.75, { t, glowBase: true });
-        Art.astronaut(ctx, 470, 610, 1.1, { t, anim: st < 2 ? 'idle' : 'wave', at: st, look: 1 });
-        Art.egg(ctx, 720, 610, 0.9, this.pid, { t, crack: 0 });
-        if (st > 1) Art.sparkle(ctx, 760, 430, 20, '#ffffff', 0.5 + Math.sin(t * 5) * 0.4);
-        if (pd.special === 'thief' && st > 2.5) Art.thief(ctx, 1080 - Math.min(80, (st - 2.5) * 60), 620, 0.9, t, {});
-        if (pd.special === 'serpent' && st > 2.5) { ctx.save(); ctx.globalAlpha = Math.min(1, st - 2.5); for (const side of [-1, 1]) { Art.ell(ctx, 1040 + side * 26, 520, 14, 9, '#ffe14a'); Art.ell(ctx, 1040 + side * 26, 520, 3, 8, '#1a1030'); } ctx.restore(); World.bigLeaf(ctx, 1040, 640, 0.9, 0); }
       } else {
         Art.rocket(ctx, 200, World.GROUND + 20, 0.75, { t, glowBase: true });
         if (s.kind === 'peek') {
           const k = M.clamp((st - 0.6) / 1.2, 0, 1);
-          Art.astronaut(ctx, 470, 610, 1.1, { t, look: 1 });
-          Art.dragon(ctx, 820, 600 + (1 - k) * 160, 0.75, { t, planet: 'nyam', level: 1, look: -0.6, tilt: -0.15, blink: (t % 3 < 0.15) ? 1 : 0 });
-          Art.bush(ctx, 820, 620, 1.25, '#ff7eb6', t * 4 * (1 - k));
-          if (st > 1.6) { ctx.save(); ctx.globalAlpha = 0.85; UI.text(ctx, '?', 900, 300, 70, '#fff', 'center', true); ctx.restore(); }
+          Art.astronaut(ctx, 440, 610, 1.1, { t, look: 1 });
+          Art.dragon(ctx, 760, 600 + (1 - k) * 160, 0.66, { kind: 'dark', t, look: -0.6, tilt: -0.15, blink: (t % 3 < 0.15) ? 1 : 0 });
+          Art.dragon(ctx, 950, 600 + (1 - M.clamp(k * 1.4 - 0.4, 0, 1)) * 160, 0.66, { kind: 'light', t: t + 1, look: -0.8, tilt: 0.1, blink: (t % 3.4 < 0.15) ? 1 : 0 });
+          Art.bush(ctx, 760, 620, 1.2, '#ff7eb6', t * 4 * (1 - k)); Art.bush(ctx, 950, 625, 1.2, '#b07cff', t * 3 * (1 - k));
+          if (st > 1.6) { ctx.save(); ctx.globalAlpha = 0.85; UI.text(ctx, '?', 860, 280, 70, '#fff', 'center', true); ctx.restore(); }
         } else if (s.kind === 'friends') {
           const eat = st > 1.2;
-          Art.astronaut(ctx, 520, 610, 1.1, { t, holding: eat ? null : 0, anim: eat ? 'cheer' : 'wave', at: st });
-          Art.dragon(ctx, 740, 600, 0.8, { t, planet: 'nyam', level: 1, look: -0.5, happy: eat, mouth: !eat && st > 0.6 ? 0.8 : (eat && st < 2 ? Math.abs(Math.sin(st * 12)) * 0.5 : 0), squash: eat ? Math.sin(st * 10) * 0.2 * Math.max(0, 1 - (st - 1.2)) : 0 });
-          if (eat && !this.purred) { this.purred = true; Sound.chomp(); setTimeout(() => Sound.purr(2, { planet: 'nyam' }), 500); }
+          Art.astronaut(ctx, 480, 610, 1.1, { t, holding: eat ? null : 0, anim: eat ? 'cheer' : 'wave', at: st });
+          for (const [id, x, ph] of [['dark', 700, 0], ['light', 900, 0.4]]) {
+            const e = st > 1.2 + ph;
+            Art.dragon(ctx, x, 600, 0.68, { kind: id, t: t + ph, look: -0.5, happy: e, mouth: !e && st > 0.6 ? 0.8 : (e && st < 2.2 + ph ? Math.abs(Math.sin(st * 12)) * 0.5 : 0), squash: e ? Math.sin(st * 10) * 0.2 * Math.max(0, 1 - (st - 1.2 - ph)) : 0 });
+          }
+          if (eat && !this.purred) { this.purred = true; Sound.chomp(); setTimeout(() => Sound.purr(2, { dragon: 'dark' }), 500); }
         } else if (s.kind === 'serpent') {
-          Art.astronaut(ctx, 470, 610, 1.1, { t, look: 1, anim: st > 2 ? 'salute' : 'idle', at: st });
-          Art.dragon(ctx, 660, 600, 0.75, { t, planet: 'nyam', level: 2, look: 1, tilt: -0.1, blink: (t % 3 < 0.15) ? 1 : 0 });
-          const hx = M.lerp(1400, 900, M.clamp(st / 2, 0, 1)), pts = [];
-          for (let i = 0; i < 24; i++) pts.push([hx + i * 26, 470 + Math.sin(t * 3 - i * 0.5) * 18]);
-          Art.serpent(ctx, pts, t, { open: Math.sin(t * 3) > 0.4, r: 36 });
+          Art.astronaut(ctx, 380, 610, 1.1, { t, look: 1, anim: st > 2 ? 'salute' : 'idle', at: st });
+          Art.dragon(ctx, 560, 600, 0.6, { kind: 'dark', t, look: 1, tilt: -0.1, blink: (t % 3 < 0.15) ? 1 : 0 });
+          Art.dragon(ctx, 720, 600, 0.6, { kind: 'light', t: t + 1, look: 1, tilt: 0.1, blink: (t % 3.3 < 0.15) ? 1 : 0 });
+          Art.lair(ctx, 1090, 612, 1, t, { peek: M.clamp((st - 0.8) / 1, 0, 1), talk: st > 1.5 && Math.sin(t * 10) > 0, eyes: true });
           if (st > 1 && !this.hissed) { this.hissed = true; Sound.hiss(); }
-        } else if (s.kind === 'beacon') {
-          Art.astronaut(ctx, 560, 610, 1.1, { t, look: 1 });
-          Art.dragon(ctx, 760, 600, 0.8, { t, planet: 'nyam', level: 1, look: 1, blink: (t % 4 < 0.15) ? 1 : 0 });
-          ctx.save(); ctx.globalAlpha = 0.6 + Math.sin(t * 4) * 0.4;
-          ctx.beginPath(); ctx.arc(1150, 355, 60, 0, 7); ctx.lineWidth = 6; ctx.strokeStyle = '#ffd23f'; ctx.setLineDash([12, 10]); ctx.stroke(); ctx.setLineDash([]);
-          ctx.restore();
-        }
+        } else if (s.kind === 'play') {
+          Art.astronaut(ctx, 420, 610, 1.1, { t, anim: 'dance', at: st });
+          Art.dragon(ctx, 640, 600, 0.66, { kind: 'dark', t, happy: true, flying: true, lift: 40 + Math.sin(st * 3) * 20 });
+          Art.dragon(ctx, 860, 600, 0.66, { kind: 'light', t: t + 1, happy: true, flying: true, lift: 40 + Math.sin(st * 3 + 1.5) * 20 });
+          for (let i = 0; i < 3; i++) { Art.ell(ctx, 1040 + i * 60, 300, 24, 24, '#ffd23f'); Art.icon(ctx, 'key', 1040 + i * 60, 300, 0.6, t); }
+      }
       }
     }
     // субтитры для родителей

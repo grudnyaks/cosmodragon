@@ -13,7 +13,7 @@ G.scenes.bowling = {
     this.resetBall();
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 360, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('bowling') });
-    Voice.say('Смахни шар пальцем вверх и сбей кегли! Нужно сбить ' + this.need + '.');
+    Voice.say('Смахни шар пальцем вверх и сбей кегли!');
   },
   setPins() {
     this.pins = [];

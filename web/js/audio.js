@@ -27,9 +27,10 @@ const Sound = (function () {
   // Записанное урчание: у каждой планеты свой голос (sounds/<планета>/purrN.mp3), у Ням-Ням — исходная запись
   const purrBufs = {}, purrLoading = {};
   let lastPurr = -1, purrUntil = 0;
-  function voiceDir(pid) { const v = (PLANET_BY_ID[pid] || PLANETS[0]).voice; return v === 'nyam' ? 'sounds/' : 'sounds/' + v + '/'; }
+  function voiceDir(v) { return v === 'nyam' ? 'sounds/' : 'sounds/' + v + '/'; }
+  function voiceOf(id) { return (DRAGON_BY_ID[id] || DRAGON_BY_ID[buddy()] || DRAGONS[0]).voice; }
   function loadPurrs(pid) {
-    pid = pid || S.data.planet;
+    pid = pid || 'nyam';
     if (purrLoading[pid] || !ac) return; purrLoading[pid] = true;
     purrBufs[pid] = [];
     for (let i = 1; i <= 4; i++) {
@@ -138,13 +139,13 @@ const Sound = (function () {
     purr(len, opt) {
       if (!ok()) return;
       opt = opt || {};
-      const pid = opt.planet || S.data.planet;
+      const pid = voiceOf(opt.dragon);
       loadPurrs(pid);
       const list = purrBufs[pid];
       if (list && list.length) {
         const now = ac.currentTime;
         if (now < purrUntil - 0.3) return; // не накладываем урчание на урчание
-        const lvl = Math.max(1, (S.data.planets[pid] || {}).level || 1), rate = (opt.rate || 1) * (1.1 - (lvl - 1) * 0.04);
+        const rate = (opt.rate || 1) * 1.05;
         let t = now; const total = len || 1.6;
         do { t += playPurrSample(list, t, rate * (0.97 + Math.random() * 0.06), opt.gain) - 0.05; } while (t - now < total * 0.8);
         purrUntil = t;
@@ -152,7 +153,7 @@ const Sound = (function () {
       }
       this.purrSynth(len);
     },
-    preload(pid) { if (ok()) loadPurrs(pid); },
+    preload() { if (ok()) for (const d of DRAGONS) loadPurrs(d.voice); },
     // хихиканье злого воришки
     giggle() {
       if (!ok()) return; const t0 = ac.currentTime;

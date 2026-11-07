@@ -34,7 +34,7 @@ const World = {
     if (pd.id === 'water') World.sea(ctx, t);
     else World.ridge(ctx, 505, 0.017, 22, pd.mount, 0.8, false);
     if (pd.id === 'fire') World.volcanoes(ctx, t);
-    if (!opt.noBeacon) Art.beacon(ctx, 1150, 505, 0.8, lit, t, pd.beacon);
+    if (opt.beacon) Art.beacon(ctx, 1150, 505, 0.8, lit, t, pd.beacon);
     // земля
     World.ground(ctx, World.GROUND, t, pd.ground, pd.id);
     if (!opt.noDecor) World.decor(ctx, t, pd.id);
