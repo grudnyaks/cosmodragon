@@ -126,7 +126,7 @@ section(5, 'Перерыв и достижения');
 group('Перерыв'); for (const t of literals('scene_rest.js')) add(t);
 D.REST_TIPS.forEach(t => add(t));
 group('Достижения: названия и описания');
-const spell = t => t.replace(/\b1500\b/, 'тысячу пятьсот').replace(/\b500\b/, 'пятьсот').replace(/\b300\b/, 'триста').replace(/\b200\b/, 'двести').replace(/\b100\b/, 'сто').replace(/\b50\b/, 'пятьдесят').replace(/\b20\b/, 'двадцать').replace(/\b(\d+)\b/g, m => D.NUM_WORDS[+m] || m);
+const spell = t => t.replace('во всех 12 играх', 'во всех двенадцати играх').replace(/\b1500\b/, 'тысячу пятьсот').replace(/\b500\b/, 'пятьсот').replace(/\b300\b/, 'триста').replace(/\b200\b/, 'двести').replace(/\b100\b/, 'сто').replace(/\b50\b/, 'пятьдесят').replace(/\b20\b/, 'двадцать').replace(/\b(\d+)\b/g, m => D.NUM_WORDS[+m] || m);
 D.ACH.forEach(a => { add(a.title + (/[!.]$/.test(a.title) ? '' : '.')); add(spell(a.desc) + '.', { game: a.desc + '.' }); });
 
 const all = out.flatMap(s => s.subs.flatMap(g => g.items));

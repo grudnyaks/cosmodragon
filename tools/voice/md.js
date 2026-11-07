@@ -1,11 +1,11 @@
 const S = require('./script.json'), ID = it => it.isNew ? it.id + ' ★' : it.id, fs = require('fs');
 const esc = t => t.replace(/\|/g, '\\|');
-const TITLES = { 1: 'История и планеты', 2: 'Главный экран', 3: 'Мини-игры', 4: 'Школа дракона', 5: 'Перерыв, умения, достижения' };
+const TITLES = { 1: 'История', 2: 'Главный экран', 3: 'Мини-игры', 6: 'Змей Шипун', 5: 'Перерыв и достижения' };
 for (const sec of S) {
-  let md = '## ' + sec.n + '. ' + TITLES[sec.n] + '\n\n';
+  let md = '## ' + TITLES[sec.n] + '\n\n';
   const n = sec.subs.reduce((a, g) => a + g.items.length, 0);
   const ids = sec.subs.flatMap(g => g.items.map(i => +i.id)), nNew = sec.subs.flatMap(g => g.items).filter(i => i.isNew).length;
-  md += 'Фразы ' + Math.min(...ids) + '–' + Math.max(...ids) + ', всего ' + n + (nNew ? ', из них новых (★): ' + nNew : '') + '.\n\n';
+  md += 'Фраз в разделе: ' + n + (nNew ? ', из них новых (★): ' + nNew : '') + '.\n\n';
   for (const g of sec.subs) {
     if (!g.items.length) continue;
     md += '### ' + g.title + '\n\n';
@@ -26,3 +26,10 @@ for (const sec of S) {
   fs.writeFileSync('/tmp/voice_s' + sec.n + '.md', md.trim() + '\n');
   console.log(sec.n, md.length);
 }
+
+// диапазоны номеров, которые больше не нужны
+const ch = require('./changes.json');
+const rm = ch.removed.map(r => +r.id).sort((a, b) => a - b), rr = [];
+for (const id of rm) { const l = rr[rr.length - 1]; if (l && id === l[1] + 1) l[1] = id; else rr.push([id, id]); }
+fs.writeFileSync('/tmp/voice_removed.txt', rr.map(([a, b]) => a === b ? String(a) : a + '–' + b).join(', '));
+console.log('removed ranges', rr.length);
