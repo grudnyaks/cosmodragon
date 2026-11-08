@@ -25,7 +25,9 @@
   // o: {kind, t, blink, mouth, look, squash, flap, fire, happy, lift, flying, tilt, glow}
   Art.dragon = function (ctx, x, y, s, o) {
     o = o || {};
-    const D = DRAGON_BY_ID[o.kind] || DRAGON_BY_ID[typeof buddy === 'function' ? buddy() : 'dark'] || DRAGONS[0];
+    let D = DRAGON_BY_ID[o.kind] || DRAGON_BY_ID[typeof buddy === 'function' ? buddy() : 'dark'] || DRAGONS[0];
+    if (o.colors) D = paletteFrom(D, o.colors);
+    if (o.outfit === undefined && o.kind && typeof Care !== 'undefined' && DRAGON_BY_ID[o.kind]) o = Object.assign({}, o, { outfit: Care.outfit(o.kind) });
     const t = o.t || 0, look = M.clamp(o.look || 0, -1, 1);
     const sq = o.squash || 0, breathe = Math.sin(t * 2.2) * 0.012;
     const lift = o.lift || 0, fly = !!o.flying;
@@ -68,6 +70,8 @@
     // шея
     vol(ctx, E(ctx, 0, -158, 38, 30), 0, -160, 36, D.hi, D.body, D.shade, 0);
     ao(ctx, 0, -140, 40, 12, 0.18);
+    if (o.dirt) dirt(ctx, o.dirt.filter(d => !d.head));
+    if (o.outfit && o.outfit.neck && Art.outfitItem) Art.outfitItem(ctx, o.outfit.neck, 0, -150, 1, o.t || 0);
     head(ctx, D, t, look, (o.tilt || 0) + Math.sin(t * 1.3) * 0.02, o);
     if (o.fire > 0) fire(ctx, o.fire, t, look);
     ctx.restore();
@@ -184,14 +188,40 @@
       ctx.save(); ctx.beginPath(); ctx.ellipse(0, 40, 16 + m * 4, 4 + m * 12, 0, 0, TAU); ctx.clip(); ell(ctx, 0, 48 + m * 6, 12, 8, '#e86a8a'); ctx.restore();
       for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * 9, 36 - m * 6); ctx.lineTo(side * 6, 42 - m * 4); ctx.lineTo(side * 3, 36 - m * 6); ctx.fillStyle = '#fff8ea'; ctx.fill(); }
     } else {
-      ctx.beginPath(); ctx.moveTo(-24, 36); ctx.quadraticCurveTo(0, o.happy ? 50 : 44, 24, 36);
+      const sad = o.mood === 'sad' && !o.happy;
+      ctx.beginPath(); ctx.moveTo(-20, sad ? 42 : 36); ctx.quadraticCurveTo(0, o.happy ? 50 : sad ? 32 : 44, 20, sad ? 42 : 36);
       ctx.lineWidth = 2.5; ctx.strokeStyle = rgba(mix(D.shade, '#000000', 0.5), 0.75); ctx.stroke();
     }
     // румянец
     ctx.save(); ctx.globalAlpha = o.happy ? 0.35 : 0.15; ell(ctx, -38, 18, 11, 6, '#ff8fb0'); ell(ctx, 38, 18, 11, 6, '#ff8fb0'); ctx.restore();
     // глаза
     for (const side of [-1, 1]) eye(ctx, D, side * 27, -6, side, look, o);
+    if (o.mood === 'sad' && !o.sleep) for (const side of [-1, 1]) {
+      ctx.beginPath(); ctx.moveTo(side * 12, -26); ctx.lineTo(side * 40, -18); ctx.lineWidth = 4; ctx.strokeStyle = rgba(mix(D.shade, '#000000', 0.5), 0.85); ctx.stroke();
+    }
+    if (o.dirt) dirt(ctx, o.dirt.filter(d => d.head));
+    if (o.outfit && Art.outfitItem) {
+      if (o.outfit.face) Art.outfitItem(ctx, o.outfit.face, 0, -6, 1, o.t || 0);
+      if (o.outfit.head) Art.outfitItem(ctx, o.outfit.head, 0, -46, 1, o.t || 0);
+    }
     ctx.restore();
+  }
+  function dirt(ctx, list) {
+    for (const d of list) {
+      if (d.a <= 0.02) continue;
+      ctx.save(); ctx.globalAlpha = d.a * 0.85;
+      ctx.fillStyle = Art.rg(ctx, d.x, d.y, d.r, '#7a5228', 'rgba(110,70,30,0)', 0, 0); ell(ctx, d.x, d.y, d.r, d.r * 0.8); ctx.fill();
+      ell(ctx, d.x - d.r * 0.2, d.y, d.r * 0.5, d.r * 0.4, '#6a4420');
+      ctx.restore();
+    }
+  }
+  function paletteFrom(D, c) {
+    const body = c.body || D.body, belly = c.belly || D.belly, wing = c.wing || D.wingMem, horn = c.horn || D.horn, eye = c.eye || D.iris[1];
+    return Object.assign({}, D, {
+      body, hi: mix(body, '#ffffff', 0.35), shade: mix(body, '#000000', 0.45), belly, bellyHi: mix(belly, '#ffffff', 0.4),
+      wing: mix(body, '#000000', 0.15), wingMem: wing, horn, hornShade: mix(horn, '#000000', 0.35), claw: horn,
+      iris: [mix(eye, '#ffffff', 0.6), eye, mix(eye, '#000000', 0.55)], spot: c.spot || mix(body, '#ffffff', 0.35), marks: 'spots',
+    });
   }
 
   function eye(ctx, D, x, y, side, look, o) {
@@ -199,6 +229,11 @@
     ctx.save(); ctx.translate(x, y);
     // глазница
     ao(ctx, 0, -2, rx + 8, ry + 6, 0.22);
+    if (o.sleep) {
+      ctx.beginPath(); ctx.moveTo(-rx, 0); ctx.quadraticCurveTo(0, 8, rx, 0);
+      ctx.lineWidth = 4; ctx.strokeStyle = rgba(mix(D.shade, '#000000', 0.6), 0.9); ctx.stroke();
+      ctx.restore(); return;
+    }
     if (o.happy) {
       ctx.beginPath(); ctx.moveTo(-rx, 2); ctx.quadraticCurveTo(0, -ry, rx, 2);
       ctx.lineWidth = 4; ctx.strokeStyle = rgba(mix(D.shade, '#000000', 0.6), 0.9); ctx.stroke();
@@ -219,7 +254,7 @@
     ell(ctx, -5 + look * 3, -6, 4, 3.4, 'rgba(255,255,255,0.95)');
     ell(ctx, 6 + look * 3, 6, 1.8, 1.8, 'rgba(255,255,255,0.6)');
     // моргание: веко опускается сверху
-    const b = o.blink || 0;
+    const b = Math.max(o.blink || 0, o.mood === 'sad' ? 0.3 : 0);
     if (b > 0) { ctx.fillStyle = D.body; ctx.fillRect(-rx - 2, -ry - 2, rx * 2 + 4, (ry * 2 + 4) * b); }
     ctx.restore();
     ctx.save(); if (side < 0) ctx.scale(-1, 1); shape(); ctx.restore();
@@ -419,7 +454,7 @@
       }
     }
     // табличка
-    ctx.save(); ctx.translate(-150, -30); ctx.rotate(-0.12);
+    ctx.save(); ctx.translate(40, -238); ctx.rotate(0.08);
     ctx.fillStyle = '#8a5a2a'; ctx.fillRect(-4, 0, 8, 50);
     vol(ctx, () => Art.rr(ctx, -58, -30, 116, 40, 8), 0, -10, 60, '#d8a870', '#b07a40', '#7a4a20', 1.5);
     UI.text(ctx, 'Шипун', 0, -10, 20, '#3a1a0a', 'center', false);

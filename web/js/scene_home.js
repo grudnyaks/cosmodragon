@@ -1,4 +1,4 @@
-// Главный экран Ням-Ням: два дракончика, космонавт, ракета, 12 игр и пещера Змея Шипуна
+// Главный экран Ням-Ням: два дракончика с потребностями (как тамагочи), космонавт, ракета, игры и пещера Змея Шипуна
 'use strict';
 const ASTRO_ANIMS = ['wave', 'jump', 'dance', 'salute', 'spin', 'cheer'];
 const ASTRO_PHRASES = ['Привет!', 'Полетели за вкусняшками!', 'Дракончики — мои лучшие друзья!', 'Смотри, как я умею!', 'Космос такой большой!',
@@ -6,13 +6,14 @@ const ASTRO_PHRASES = ['Привет!', 'Полетели за вкусняшк�
   'Кто тут самый весёлый? Я!', 'Здесь так красиво!', 'Опа! Прыжок!', 'На планете Ням-Ням так интересно!', 'Шипуна я не боюсь!'];
 const ROCKET_PHRASES = ['Бортовой компьютер: все системы в норме!', 'Топливо: сто процентов!', 'Ракета готова к полёту!',
   'Проверка двигателей. Отлично!', 'Внимание! Обнаружены вкусняшки!', 'Связь с Землёй установлена!', 'Курс на звёзды проложен!'];
-const DRAGON_SPOT = { dark: 610, light: 830 };
+const DRAGON_SPOT = { dark: 575, light: 865 };
 const CAVE_X = 1140;
 
 G.scenes.home = {
   enter() {
-    PS().visited = true; S.save();
+    PS().visited = true; Care.tick(); S.save();
     Sound.preload();
+    this.redirect = Care.asleep() ? 'sleeping' : null; this.tickT = 0; this.lateAsked = false;
     this.drs = {};
     for (const d of DRAGONS) this.drs[d.id] = { id: d.id, x: DRAGON_SPOT[d.id], y: 600, lift: 0, squash: 0, mouth: 0, happyT: 0, fire: 0, flying: false, look: 0, tilt: 0,
       blinkT: M.rnd(1, 4), blink: 0, taps: 0, carried: false };
@@ -21,17 +22,30 @@ G.scenes.home = {
     this.cave = { peek: 0, eyes: 1, talk: 0 };
     this.sp = null; this.busy = false; this.feedTurn = 0;
     // 12 игр в нижнем ряду
-    const games = P().games, n = games.length, step = 97, r = 41;
+    const games = P().games.concat([{ scene: 'duo', icon: 'duo', color: '#ff9a3c' }]), n = games.length, step = 91, r = 39;
     const x0 = 640 - (n - 1) * step / 2;
     this.gameBtns = games.map((g, i) => UI.add(this, { x: x0 + i * step, y: 668, r, icon: g.icon, color: g.color, bob: true, iconScale: 1.1,
       onTap: () => { Voice.stop(); G.go(g.scene); } }));
-    this.feedBtn = UI.add(this, { x: 720, y: 300, r: 54, color: '#ffd23f', draw: (ctx) => Art.treat(ctx, 0, 0, 4, 0.72, G.t), onTap: () => this.feed() });
-    const tx = i => G.view.x0 + 58 + i * 84;
-    UI.add(this, { x: tx(0), y: 56, r: 35, icon: S.data.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
-    UI.add(this, { x: tx(1), y: 56, r: 35, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
-    UI.add(this, { x: tx(2), y: 56, r: 35, icon: 'snake', color: '#8f6cf2', onTap: () => { Voice.stop(); G.go('story'); } });
-    UI.add(this, { x: tx(3), y: 56, r: 35, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
-    this.updBtn = UI.add(this, { x: tx(4), y: 56, r: 35, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
+    this.feedBtn = UI.add(this, { x: 720, y: 470, r: 44, color: '#ffd23f', draw: (ctx) => Art.treat(ctx, 0, 0, 4, 0.6, G.t), onTap: () => this.feed() });
+    // имя и четыре потребности над каждым дракончиком
+    this.petUI = {};
+    for (const D of DRAGONS) {
+      const x = DRAGON_SPOT[D.id], ui = this.petUI[D.id] = {};
+      ui.name = UI.add(this, { x, y: 300, w: 190, h: 44, label: Care.name(D.id), fontSize: 24, color: D.id === 'dark' ? '#4a4660' : '#c8b8e8',
+        onTap: () => { Voice.stop(); G.go('name', { id: D.id }); } });
+      ui.needs = NEEDS.map((N, i) => UI.add(this, { x: x - 87 + i * 58, y: 358, r: 25, color: '#ffffff', need: N.id,
+        draw: (ctx) => this.drawNeed(ctx, D.id, N), onTap: () => this.needTap(D.id, N) }));
+    }
+    const tx = i => G.view.x0 + 52 + i * 78;
+    UI.add(this, { x: tx(0), y: 56, r: 33, icon: S.data.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
+    UI.add(this, { x: tx(1), y: 56, r: 33, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
+    UI.add(this, { x: tx(2), y: 56, r: 33, icon: 'snake', color: '#8f6cf2', onTap: () => { Voice.stop(); G.go('story'); } });
+    UI.add(this, { x: tx(3), y: 56, r: 33, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
+    UI.add(this, { x: tx(4), y: 56, r: 33, icon: 'hat', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('wardrobe'); } });
+    UI.add(this, { x: tx(5), y: 56, r: 33, icon: 'palette', color: '#41d982', onTap: () => { Voice.stop(); G.go('paint'); } });
+    this.bedBtn = UI.add(this, { x: 720, y: 190, w: 380, h: 80, label: 'Уложить спать', icon: 'moon', iconX: -140, fontSize: 30, color: '#5a4ab0', pulse: true, hidden: true,
+      onTap: () => { Voice.stop(); G.go('sleep', { mode: 'bedtime' }); } });
+    this.updBtn = UI.add(this, { x: tx(6), y: 56, r: 33, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     this.rescueBtn = UI.add(this, { x: 640, y: 180, w: 470, h: 84, label: 'Спасти дракончиков!', icon: 'sword', iconX: -185, fontSize: 32, color: '#ff3b5c', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('rescue'); } });
     // Шипун приходит, когда набралось достаточно побед
@@ -43,8 +57,9 @@ G.scenes.home = {
     if (G.scene !== this || this.busy) return;
     const v = V();
     if (v.taken.length) { Voice.say(v.keys >= 3 ? 'Все ключи найдены! Нажми на красную кнопку, чтобы спасти дракончиков!' : 'Шипун держит дракончиков в Тёмной пещере! ' + Villain.task(v.taken)); return; }
-    if (PS().treats > 0) Voice.say('Дракончики хотят кушать! Нажми на угощение.');
-    else Voice.say('Поиграй в игры, чтобы найти вкусняшки для дракончиков!');
+    if (Care.late()) { this.askBed(); return; }
+    for (const D of DRAGONS) { const n = Care.lowest(D.id, 35); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); Care.data().lastCall = Date.now(); return; } }
+    Voice.say('Привет! Дракончики рады тебя видеть!');
   },
   dragonHit(id, x, y) {
     const d = this.drs[id], s = 0.72;
@@ -100,7 +115,7 @@ G.scenes.home = {
   // ---------- дракончики ----------
   pet(id) {
     const d = this.drs[id], D = DRAGON_BY_ID[id];
-    S.data.buddy = id; S.save();
+    S.data.buddy = id; Care.add(id, 'fun', 8);
     d.taps++; stat('pet');
     Sound.purr(1.6, { dragon: id });
     d.happyT = 1.8;
@@ -111,7 +126,7 @@ G.scenes.home = {
     } else if (d.taps % 2 === 0) {
       d.flying = true;
       G.tween(d, { lift: 140 }, 0.6, G.ease.outQuad, () => G.tween(d, { lift: 0 }, 0.7, G.ease.inOutQuad, () => { d.flying = false; }, 0.4));
-    } else if (d.taps === 1) Voice.say(D.name + ' любит, когда его гладят!');
+    } else if (d.taps === 1) Voice.say(Care.name(id) + ' любит, когда его гладят!');
   },
   feed() {
     if (this.busy) return;
@@ -124,7 +139,7 @@ G.scenes.home = {
       return;
     }
     const id = here[this.feedTurn++ % here.length], d = this.drs[id];
-    ps.treats--; S.save(); stat('fed');
+    ps.treats--; Care.add(id, 'food', 12); Care.add(id, 'fun', 3); stat('fed');
     const mx = d.x, my = d.y - 150 * 0.72 - d.lift;
     d.mouth = 0; G.tween(d, { mouth: 1 }, 0.3);
     UI.flyTreat(M.ri(0, 5), this.feedBtn.x, this.feedBtn.y, mx, my, 0, () => {
@@ -132,6 +147,28 @@ G.scenes.home = {
       G.burst(mx, my, { kind: 'star', n: 8, speed: 180, size: 12 }); d.happyT = 1.5;
       setTimeout(() => Sound.purr(1.2, { dragon: id }), 400);
     });
+  },
+  // ---------- потребности ----------
+  drawNeed(ctx, id, N) {
+    const v = Care.pet(id)[N.id] / 100;
+    ctx.beginPath(); ctx.arc(0, 0, 21, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v); ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.strokeStyle = v < 0.3 ? '#ff3b5c' : v < 0.6 ? '#ffb23a' : N.color; ctx.stroke();
+    Art.icon(ctx, N.icon, 0, 0, 0.5, G.t);
+  },
+  pulseNeed(id, need) {
+    const b = this.petUI[id].needs.find(x => x.need === need); if (!b) return;
+    b.pulse = true; setTimeout(() => { b.pulse = false; }, 4000);
+  },
+  needTap(id, N) {
+    if (this.busy) return;
+    S.data.buddy = id; S.save();
+    if (N.id === 'fun') { this.pet(id); return; }
+    if (N.id === 'energy' && Care.late()) { Voice.stop(); G.go('sleep', { mode: 'bedtime' }); return; }
+    Voice.stop(); G.go(N.scene, { id });
+  },
+  askBed() {
+    this.lateAsked = true; this.bedBtn.hidden = false;
+    Voice.say('Уже поздно! Дракончики зевают. Пора укладываться спать!');
   },
   // ---------- похищение ----------
   kidnap() {
@@ -164,6 +201,18 @@ G.scenes.home = {
     return pts;
   },
   update(dt) {
+    if (this.redirect && G.fadeDir === 0) { const r = this.redirect; this.redirect = null; G.go(r); return; }
+    this.tickT += dt;
+    if (this.tickT > 2) {
+      this.tickT = 0; Care.tick();
+      const c = Care.data();
+      if (!this.busy && !Voice.cur && Date.now() - (c.lastCall || 0) > 50000) {
+        if (Care.late() && !this.lateAsked) this.askBed();
+        else for (const D of DRAGONS) { if (isTaken(D.id)) continue; const n = Care.lowest(D.id, 25); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); break; } }
+        c.lastCall = Date.now();
+      }
+    }
+    for (const D of DRAGONS) { const ui = this.petUI[D.id], hide = isTaken(D.id) || this.drs[D.id].carried; ui.name.hidden = hide; ui.name.label = Care.name(D.id); ui.needs.forEach(b => { b.hidden = hide; }); }
     for (const id in this.drs) {
       const d = this.drs[id];
       d.blinkT -= dt;
@@ -177,8 +226,9 @@ G.scenes.home = {
     this.updBtn.hidden = !G.updateReady;
     const v = V();
     this.rescueBtn.hidden = !(v.taken.length && v.keys >= 3 && !this.busy);
-    if (v.taken.length) this.rescueBtn.label = 'Спасти ' + (v.taken.length > 1 ? 'дракончиков' : DRAGON_BY_ID[v.taken[0]].acc) + '!';
+    if (v.taken.length) this.rescueBtn.label = 'Спасти ' + (v.taken.length > 1 ? 'дракончиков' : Care.custom(v.taken[0]) ? Care.name(v.taken[0]) : DRAGON_BY_ID[v.taken[0]].acc) + '!';
     this.feedBtn.hidden = !this.present().length || this.busy;
+    if (Care.late() && !this.busy) { this.bedBtn.hidden = false; this.rescueBtn.y = 270; }
   },
   draw(ctx) {
     const t = G.t, v = V();
@@ -194,8 +244,11 @@ G.scenes.home = {
         ctx.save(); ctx.globalAlpha = 0.35; Art.ell(ctx, d.x, d.y, 80, 16, '#3a1a3a'); ctx.restore();
         continue;
       }
-      Art.dragon(ctx, d.x, d.y, 0.72, { kind: D.id, t: t + (D.id === 'light' ? 1.3 : 0), blink: d.blink, mouth: d.mouth, look: d.look, squash: d.squash,
-        happy: d.happyT > 0 && d.mouth < 0.1, lift: d.lift, flying: d.flying, fire: d.fire, tilt: d.tilt });
+      const late = Care.late(), yawn = late && ((t + (D.id === 'light' ? 3 : 0)) % 7) < 1.2 ? Math.sin(((t + (D.id === 'light' ? 3 : 0)) % 7) / 1.2 * Math.PI) : 0;
+      Art.dragon(ctx, d.x, d.y, 0.72, { kind: D.id, t: t + (D.id === 'light' ? 1.3 : 0), blink: yawn > 0.2 ? 0.8 : d.blink, mouth: Math.max(d.mouth, yawn), look: d.look, squash: d.squash,
+        happy: d.happyT > 0 && d.mouth < 0.1, lift: d.lift, flying: d.flying, fire: d.fire, tilt: d.tilt, mood: d.happyT > 0 ? 'happy' : Care.mood(D.id) });
+      const low = d.happyT > 0 ? null : Care.lowest(D.id, 30);
+      if (low && !this.busy) this.thought(ctx, d.x + (D.id === 'dark' ? -110 : 110), d.y - 215 - d.lift, low, t, D.id === 'dark' ? 1 : -1);
     }
     if (this.sp) {
       const pts = this.serpentPts(this.sp.head, this.sp.y, t);
@@ -204,9 +257,17 @@ G.scenes.home = {
     }
     if (v.taken.length && !this.sp) this.drawKeys(ctx, t);
   },
+  thought(ctx, x, y, N, t, dir) {
+    const b = Math.sin(t * 3) * 4;
+    ctx.save(); ctx.globalAlpha = 0.95;
+    Art.ell(ctx, x + dir * 40, y + 46 + b, 7, 7, '#fff'); Art.ell(ctx, x + dir * 26, y + 32 + b, 10, 10, '#fff');
+    Art.ell(ctx, x, y + b, 34, 30, '#fff');
+    Art.icon(ctx, N.icon, x, y + b, 0.75, t);
+    ctx.restore();
+  },
   drawKeys(ctx, t) {
-    const v = V(), cx = 700;
-    Art.rr(ctx, cx - 250, 16, 500, 110, 30); ctx.fillStyle = 'rgba(30,14,70,0.7)'; ctx.fill();
+    const v = V(), cx = 820;
+    Art.rr(ctx, cx - 210, 16, 420, 110, 30); ctx.fillStyle = 'rgba(30,14,70,0.7)'; ctx.fill();
     UI.text(ctx, 'Ключи от пещеры Шипуна', cx, 44, 26, '#ffd6f0', 'center', true);
     for (let i = 0; i < 3; i++) {
       Art.ell(ctx, cx - 90 + i * 90, 92, 26, 26, i < v.keys ? '#ffd23f' : 'rgba(255,255,255,0.15)');

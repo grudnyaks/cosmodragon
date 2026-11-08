@@ -59,6 +59,7 @@ function GW(key) {
     v.keys++;
     if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + v.keys + ' из 3', 'key'), 1600);
   } else if (!v.taken.length) v.wins++;
+  if (typeof Care !== 'undefined') Care.played();
   stat('wins', 1); S.save();
 }
 function stat(k, n) {
@@ -79,27 +80,35 @@ const Voice = {
   },
   say(text) {
     if (!S.data.voice || !text) return;
+    if (typeof Care !== 'undefined') text = Care.fill(text);
     this.stop();
     const ids = this.map && typeof VoiceNorm !== 'undefined' ? VoiceNorm.segment(text, this.map) : null;
     if (!ids) { if (this.miss.length < 200) this.miss.push(text); }
     else if (this.have && ids.every(id => this.have.has(id))) { this.queue = ids.slice(); this.playNext(++this.token); return; }
+    // своё имя внутри записанной фразы: записанные кусочки + синтезатор для имени
+    if (!ids && this.map && this.have && this.have.size) {
+      const mix = VoiceNorm.segmentMixed(text, this.map);
+      if (mix.some(p => p.id) && mix.every(p => p.tts || this.have.has(p.id)) && mix.filter(p => p.tts).length <= 2) { this.queue = mix; this.playNext(++this.token); return; }
+    }
     this.tts(text);
   },
   playNext(tok) {
     if (tok !== this.token) return;
-    const id = this.queue.shift();
+    let id = this.queue.shift();
     if (!id) { this.cur = null; return; }
+    if (id.tts) { this.tts(id.tts, true); setTimeout(() => this.playNext(tok), 350 + id.tts.length * 75); return; }
+    if (id.id) id = id.id;
     const a = new Audio('voice/' + id + '.mp3');
     this.cur = a;
     a.onended = () => setTimeout(() => this.playNext(tok), 40);
     a.onerror = () => this.playNext(tok);
     a.play().catch(() => { });
   },
-  tts(text) {
+  tts(text, keep) {
     try {
       if (window.Android && Android.speak) { Android.speak(text); return; }
       if (window.speechSynthesis) {
-        speechSynthesis.cancel();
+        if (!keep) speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'ru-RU'; u.rate = 0.95; u.pitch = 1.15;
         speechSynthesis.speak(u);

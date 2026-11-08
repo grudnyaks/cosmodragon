@@ -89,7 +89,7 @@ G.scenes.intro = {
     // субтитры для родителей
     ctx.save();
     ctx.font = 'bold 28px ' + UI.font;
-    const lines = wrap(ctx, s.text, 980);
+    const lines = wrap(ctx, Care.fill(s.text), 980);
     const h = lines.length * 38 + 28;
     Art.rr(ctx, 120, G.H - h - 18, 1000, h, 26); ctx.fillStyle = 'rgba(30,14,70,0.75)'; ctx.fill();
     lines.forEach((ln, k) => UI.text(ctx, ln, 620, G.H - h + 4 + k * 38 + 18, 28, '#fff', 'center', false));

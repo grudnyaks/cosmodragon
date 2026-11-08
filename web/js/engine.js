@@ -35,6 +35,8 @@ const G = {
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     if (typeof Sound !== 'undefined') Sound.unlock();
+    // мультитач для игр на двоих: сцена получает все пальцы через pdown/pmove/pup
+    if (G.scene && G.scene.pdown && G.fadeDir === 0) { const q = toV(e); G.scene.pdown(e.pointerId, q.x, q.y); }
     if (G.pointer.down) return; // один палец
     const p = toV(e);
     G.pointer = { x: p.x, y: p.y, down: true, id: e.pointerId, sx: p.x, sy: p.y, st: G.t };
@@ -51,6 +53,7 @@ const G = {
     s.down && s.down(p.x, p.y);
   });
   cv.addEventListener('pointermove', e => {
+    if (G.scene && G.scene.pmove) { const q = toV(e); G.scene.pmove(e.pointerId, q.x, q.y); }
     if (!G.pointer.down || e.pointerId !== G.pointer.id) return;
     const p = toV(e);
     G.pointer.x = p.x; G.pointer.y = p.y;
@@ -58,6 +61,7 @@ const G = {
     G.scene && G.scene.move && G.scene.move(p.x, p.y);
   });
   function up(e) {
+    if (G.scene && G.scene.pup) G.scene.pup(e.pointerId);
     if (!G.pointer.down || e.pointerId !== G.pointer.id) return;
     const p = toV(e);
     const b = G.pointer.btn;

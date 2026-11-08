@@ -26,6 +26,12 @@ const ACH = (function () {
     { id: 'fish10', title: 'Рыболов', desc: 'Выиграй 10 рыбалок', icon: 'fishing', goal: 10, val: () => sumGames('fishing') },
     { id: 'tower10', title: 'Строитель', desc: 'Построй 10 облачных башен', icon: 'tower', goal: 10, val: () => sumGames('tower') },
     { id: 'strike', title: 'Страйк!', desc: 'Сбей все кегли одним броском', icon: 'bowling', ok: () => st('strike') >= 1 },
+    { id: 'lunch10', title: 'Повар', desc: 'Накорми дракончиков обедом 10 раз', icon: 'plate', goal: 10, val: () => st('lunch') },
+    { id: 'bath10', title: 'Чистюля', desc: 'Искупай дракончиков 10 раз', icon: 'bath', goal: 10, val: () => st('bath') },
+    { id: 'bed5', title: 'Сладкие сны', desc: 'Уложи дракончиков спать 5 вечеров', icon: 'moon', goal: 5, val: () => st('bedtime') },
+    { id: 'style5', title: 'Модник', desc: 'Купи 5 нарядов', icon: 'hat', goal: 5, val: () => st('outfits') },
+    { id: 'paint5', title: 'Художник', desc: 'Нарисуй 5 картинок для альбома', icon: 'palette', goal: 5, val: () => st('paint') },
+    { id: 'duo5', title: 'Команда', desc: 'Выиграй 5 игр вдвоём', icon: 'duo', goal: 5, val: () => sumGames('duo') },
     { id: 'allgames', title: 'Всё попробовал', desc: 'Выиграй во всех 12 играх', icon: 'trophy', goal: 12, val: () => P().games.filter(g => sumGames(g.scene) > 0).length },
   ];
   function sumGames(k) { return PS().games[k] || 0; }

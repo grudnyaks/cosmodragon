@@ -6,8 +6,8 @@ const ROOT = path.join(__dirname, '..', '..'), JS = path.join(ROOT, 'web', 'js')
 const ctx = { console, Math, Date, JSON, window: {}, fetch: () => new Promise(() => {}), localStorage: { getItem() { return null; }, setItem() {} } };
 ctx.G = { scenes: {} }; vm.createContext(ctx);
 const load = f => vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8').replace(/^(const|let) /gm, 'var '), ctx);
-['state.js', 'planets.js', 'villain.js', 'ach.js', 'scene_home.js', 'scene_rest.js', 'scene_intro.js', 'scene_pop.js', 'scene_stars.js'].forEach(load);
-const D = vm.runInContext('({DRAGONS, PLANETS, ACH, ASTRO_PHRASES, ROCKET_PHRASES, REST_TIPS, NYAM_SLIDES, POP_COLORS, NUM_GEN, NUM_WORDS, CONSTELLATIONS, VILLAIN_CHAPTERS, VILLAIN_FINALE, VILLAIN_HIDE, VILLAIN_TAUNTS, VILLAIN_FRIEND})', ctx);
+['state.js', 'planets.js', 'villain.js', 'care.js', 'ach.js', 'scene_lunch.js', 'scene_home.js', 'scene_rest.js', 'scene_intro.js', 'scene_pop.js', 'scene_stars.js'].forEach(load);
+const D = vm.runInContext('({DRAGONS, PLANETS, ACH, ASTRO_PHRASES, ROCKET_PHRASES, REST_TIPS, NYAM_SLIDES, POP_COLORS, NUM_GEN, NUM_WORDS, CONSTELLATIONS, VILLAIN_CHAPTERS, VILLAIN_FINALE, VILLAIN_HIDE, VILLAIN_TAUNTS, VILLAIN_FRIEND, NAME_IDEAS, OUTFITS, FOOD_SAY})', ctx);
 const VoiceNorm = require(path.join(ROOT, 'web', 'js', 'voice_norm.js'));
 
 // Номера фраз постоянные: tools/voice/ids.json (ключ → номер). Новые фразы получают следующий свободный номер раздела.
@@ -120,6 +120,58 @@ for (const t of ['Шипун опутал дракончика лакричны�
   'Шипун прячет дракончика под кустиками! Следи внимательно и найди, где дракончик.', 'Шипун прячет дракончиков под кустиками! Следи внимательно и найди, где они.',
   'Ура! Все верёвки порваны!', 'Ура! Ты перехитрил Шипуна!', 'Дракончик свободен!', 'Дракончики свободны!', 'Нашёл! Но Шипун снова прячет его!', 'Нашёл! Но Шипун снова прячет их!',
   'Ты настоящий герой!']) add(t);
+
+// ===== 7. Забота о дракончиках =====
+section(7, 'Забота о дракончиках');
+const DN = ['Дракоша', 'Пушок'];
+group('Главный экран');
+add('Привет! Дракончики рады тебя видеть!');
+add('Уже поздно! Дракончики зевают. Пора укладываться спать!');
+for (const n of DN) for (const t of [' хочет кушать! Накорми его обедом.', ' испачкался! Искупай его.', ' скучает! Погладь его.', ' устал. Уложи его поспать.']) add(n + t);
+for (const t of ['хочет кушать! Накорми его обедом.', 'испачкался! Искупай его.', 'скучает! Погладь его.', 'устал. Уложи его поспать.', 'любит, когда его гладят!'])
+  add('…' + t, { game: t, note: 'Перед ним — своё имя дракончика (его скажет синтезатор)' });
+group('Имя');
+add('Как зовут дракончика? Выбери имя!');
+add('Попроси взрослого напечатать имя.');
+D.NAME_IDEAS.forEach(n => add('Привет, ' + n + '!'));
+add('Привет, …', { game: 'Привет', note: 'Дальше — своё имя' });
+group('Гардероб');
+add('Это гардероб! Выбери наряд для дракончика. Новые наряды стоят вкусняшки.');
+add('Не хватает вкусняшек! Поиграй в игры, чтобы собрать ещё.');
+D.OUTFITS.forEach(o => add('Ура! Новый наряд: ' + o.name.toLowerCase() + '!'));
+group('Обед');
+for (const n of DN) add(n + ' проголодался!');
+add('…проголодался!', { game: 'проголодался!', note: 'Перед ним — своё имя' });
+for (const k in D.FOOD_SAY) D.FOOD_SAY[k].forEach(f => add('Положи на тарелку ' + f + '.'));
+for (const k in D.FOOD_SAY) D.FOOD_SAY[k].forEach(f => add('И ещё ' + f + '.'));
+['Один!', 'Два!', 'Три!', 'Нет, это не то! Посмотри в облачко.', 'Хватит, больше не надо!', 'Ням-ням! Спасибо!', 'Вкуснятина!', 'Мур-р! Как вкусно!'].forEach(t => add(t));
+for (const n of DN) add(n + ' наелся! Спасибо, что накормил!');
+add('…наелся! Спасибо, что накормил!', { game: 'наелся! Спасибо, что накормил!', note: 'Перед ним — своё имя' });
+group('Купание');
+for (const n of DN) add(n + ' испачкался! Потри грязные пятнышки губкой.');
+add('…испачкался! Потри грязные пятнышки губкой.', { game: 'испачкался! Потри грязные пятнышки губкой.', note: 'Перед ним — своё имя' });
+add('Чисто! Теперь смой пену душем. Води душем над дракончиком.');
+add('Чистенький!');
+for (const n of DN) add(n + ' блестит!');
+add('…блестит!', { game: 'блестит!', note: 'Перед ним — своё имя' });
+group('Сон');
+add('Дракончики хотят спать.');
+for (const n of DN) add(n + ' хочет спать.');
+add('…хочет спать.', { game: 'хочет спать.', note: 'Перед ним — своё имя' });
+['Потяни одеяло вверх и укрой их!', 'Потяни одеяло вверх и укрой его!', 'Тепло и уютно! Теперь выключи лампу.', 'Спокойной ночи, дракончики! Сладких снов!',
+ 'Баю-бай! Пусть дракончик немножко поспит.', 'Тс-с-с! Дракончики засыпают.', 'Дракончики спят. Приходи утром!', 'Тс-с-с! Дракончики спят. Приходи утром!', 'Доброе утро! Дракончики проснулись!'].forEach(t => add(t));
+for (const n of DN) add(n + ' выспался и полон сил!');
+add('…выспался и полон сил!', { game: 'выспался и полон сил!', note: 'Перед ним — своё имя' });
+group('Игра вдвоём');
+add('Играем вдвоём! Один ведёт Дракошу слева, другой — Пушка справа. Ловите вкусняшки вместе!');
+add('Ура! Вы отличная команда!');
+group('Рисовалка и альбом');
+for (const f of ['scene_paint.js']) for (const t of literals(f)) add(t);
+group('Кусочки для своих имён');
+add('Выигрывай игры и найди три ключа, чтобы спасти дракончика…', { game: 'Выигрывай игры и найди три ключа, чтобы спасти дракончика', note: 'Дальше — своё имя' });
+add('Шипун утащил дракончика…', { game: 'Шипун утащил дракончика', note: 'Дальше — своё имя' });
+add('…в Тёмную пещеру.', { game: 'в Тёмную пещеру.', note: 'Перед ним — своё имя' });
+add('Выигрывай игры и найди три ключа, чтобы спасти обоих дракончиков!');
 
 // ===== 5. Перерыв и достижения =====
 section(5, 'Перерыв и достижения');

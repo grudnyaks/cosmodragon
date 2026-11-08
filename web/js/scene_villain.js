@@ -12,7 +12,7 @@ G.scenes.villain = {
     if (this.kind === 'kidnap') {
       this.caged = v.taken.slice();
       sl.push({ who: 'villain', text: v.line || Villain.sayLine(this.ch) });
-      sl.push({ who: 'narrator', text: 'Шипун утащил ' + (this.caged.length > 1 ? 'обоих дракончиков' : DRAGON_BY_ID[this.caged[0]].acc) + ' в Тёмную пещеру. ' + Villain.task(this.caged) });
+      sl.push({ who: 'narrator', text: 'Шипун утащил ' + (this.caged.length > 1 ? 'обоих дракончиков' : Care.acc(this.caged[0])) + ' в Тёмную пещеру. ' + Villain.task(this.caged) });
     } else if (this.kind === 'defeat') {
       this.caged = [];
       sl.push({ who: 'villain', text: Villain.loseLine(this.ch) });
@@ -63,7 +63,7 @@ G.scenes.villain = {
     ctx.lineWidth = 4; ctx.strokeStyle = villain ? '#b88ae8' : '#8f6cf2'; ctx.stroke();
     if (villain) { ctx.beginPath(); ctx.moveTo(380, y + 78); ctx.lineTo(420, y + 78); ctx.lineTo(370, y + 140); ctx.closePath(); ctx.fillStyle = 'rgba(40,12,60,0.92)'; ctx.fill(); }
     UI.text(ctx, villain ? 'Змей Шипун' : '', x - w / 2 + 40, y - 42, 24, '#c8e05a', 'left', false);
-    UI.wrap(ctx, s.text, x, y + (villain ? 16 : 4), w - 80, 30, villain ? '#ffffff' : '#3a1f6a', 38);
+    UI.wrap(ctx, Care.fill(s.text), x, y + (villain ? 16 : 4), w - 80, 30, villain ? '#ffffff' : '#3a1f6a', 38);
   },
 };
 

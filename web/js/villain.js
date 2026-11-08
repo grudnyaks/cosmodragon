@@ -73,7 +73,7 @@ const Villain = {
   loseLine(c) { return c != null ? VILLAIN_CHAPTERS[c].lose : M.pick(VILLAIN_HIDE.lose); },
   // «Найди три ключа, чтобы спасти …»
   task(ids) {
-    const n = ids.length > 1 ? 'Дракошу и Пушка' : DRAGON_BY_ID[ids[0]].acc;
+    const n = ids.length > 1 ? Care.both() : Care.acc(ids[0]);
     return 'Выигрывай игры и найди три ключа, чтобы спасти ' + n + '!';
   },
   taunt() {

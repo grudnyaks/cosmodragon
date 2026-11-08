@@ -205,6 +205,15 @@ const Sound = (function () {
     dig() { if (!ok()) return; noise(ac.currentTime, 0.25, 'bandpass', 1400, 500, 0.5, 1); },
     boing() { if (!ok()) return; const t = ac.currentTime; const o = tone(220, t, 0.4, 'triangle', 0.25); o.frequency.exponentialRampToValueAtTime(520, t + 0.15); o.frequency.exponentialRampToValueAtTime(300, t + 0.35); },
     fire() { if (!ok()) return; noise(ac.currentTime, 0.9, 'lowpass', 3000, 300, 0.7, 0.7); },
+    // колыбельная: тихая мелодия музыкальной шкатулки (~14 секунд)
+    lullaby() {
+      if (!ok()) return;
+      const t = ac.currentTime + 0.1, mel = [67, 64, 67, 64, 69, 67, 64, 62, 64, 65, 64, 62, 60, 62, 64, 60, 67, 64, 67, 64, 69, 67, 64, 62, 64, 62, 60];
+      const len = [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3];
+      let at = 0;
+      mel.forEach((m, i) => { tone(mf(m + 12), t + at * 0.42, len[i] * 0.42 + 0.6, 'sine', 0.09); tone(mf(m + 24), t + at * 0.42, 0.3, 'sine', 0.02); at += len[i]; });
+      [48, 53, 48, 55, 48, 53, 55, 48].forEach((m, i) => tone(mf(m + 12), t + i * 1.68, 1.6, 'triangle', 0.035));
+    },
     snap() { if (!ok()) return; const t = ac.currentTime; tone(700, t, 0.08, 'triangle', 0.3); tone(1050, t + 0.05, 0.2, 'sine', 0.2); },
     // нота поющего кристалла (0..5)
     note(i) {

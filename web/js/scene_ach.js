@@ -13,11 +13,13 @@ G.scenes.ach = {
       onTap: () => { S.data.diff = v; S.save(); this.refresh(); } })));
     [[0, 'выкл'], [20, '20 мин'], [30, '30 мин'], [45, '45 мин']].forEach(([v, name], i) => this.setBtns.push(UI.add(this, { x: 520 + i * 170, y: 410, w: 156, h: 54, label: name, fontSize: 22, color: '#5a5a7a', brk: v,
       onTap: () => { S.data.breakMin = v; S.data.playSec = 0; S.save(); this.refresh(); } })));
+    [['', 'выкл'], ['19:30', '19:30'], ['20:00', '20:00'], ['20:30', '20:30'], ['21:00', '21:00']].forEach(([v, name], i) => this.setBtns.push(UI.add(this, { x: 520 + i * 150, y: 470, w: 136, h: 50, label: name, fontSize: 22, color: '#5a5a7a', bed: v,
+      onTap: () => { Care.data().bedtime = v; S.save(); this.refresh(); } })));
     this.musicBtn = UI.add(this, { x: 435, y: 330, w: 300, h: 64, label: '', fontSize: 26, color: '#38d6c3', onTap: () => { Sound.setMusic(!S.data.music); this.refresh(); } });
     this.voiceBtn = UI.add(this, { x: 845, y: 330, w: 300, h: 64, label: '', fontSize: 26, color: '#38d6c3', onTap: () => { S.data.voice = !S.data.voice; S.save(); this.refresh(); } });
-    this.updBtn = UI.add(this, { x: 640, y: 640, w: 420, h: 64, label: 'Проверить обновления', fontSize: 26, color: '#41d982',
+    this.updBtn = UI.add(this, { x: 640, y: 678, w: 420, h: 64, label: 'Проверить обновления', fontSize: 26, color: '#41d982',
       onTap: () => { if (window.Android && Android.checkUpdates) { Android.checkUpdates(); this.msg = 'Проверяю…'; setTimeout(() => this.readInfo(), 4000); } else this.msg = 'Доступно только в приложении'; } });
-    this.resetBtn = UI.add(this, { x: 1105, y: 640, w: 290, h: 64, label: 'Сбросить прогресс', fontSize: 22, color: '#c8304a', onTap: () => this.openGate() });
+    this.resetBtn = UI.add(this, { x: 1105, y: 678, w: 290, h: 64, label: 'Сбросить прогресс', fontSize: 22, color: '#c8304a', onTap: () => this.openGate() });
     this.setBtns.push(this.musicBtn, this.voiceBtn, this.updBtn, this.resetBtn);
     // «взрослый» вопрос перед сбросом, чтобы ребёнок случайно не стёр игру
     this.gate = null;
@@ -61,6 +63,7 @@ G.scenes.ach = {
   },
   refresh() {
     for (const b of this.setBtns) if (b.diff != null) b.color = S.data.diff === b.diff ? '#ff7eb6' : '#5a5a7a';
+    for (const b of this.setBtns) if (b.bed != null) b.color = (Care.data().bedtime || '') === b.bed ? '#ff7eb6' : '#5a5a7a';
     for (const b of this.setBtns) if (b.brk != null) b.color = (S.data.breakMin || 0) === b.brk ? '#ff7eb6' : '#5a5a7a';
     this.musicBtn.label = S.data.music ? 'Музыка: вкл' : 'Музыка: выкл';
     this.voiceBtn.label = S.data.voice ? 'Голос: вкл' : 'Голос: выкл';
@@ -100,6 +103,7 @@ G.scenes.ach = {
       UI.text(ctx, 'Сложность игр', 640, 170, 30, '#fff', 'center', true);
       UI.text(ctx, 'Сложность растёт сама с каждой победой; здесь — стартовый уровень.', 640, 280, 20, '#d6c8ff', 'center', false);
       UI.text(ctx, 'Перерыв:', 370, 412, 24, '#fff', 'center', true);
+      UI.text(ctx, 'Время сна:', 370, 472, 24, '#fff', 'center', true);
       const inf = this.info;
       let err = '';
       if (inf && inf.error) err = /404/.test(inf.error) ? 'Сервер обновлений недоступен (404): репозиторий на GitHub должен быть публичным.'
@@ -109,9 +113,9 @@ G.scenes.ach = {
         'Версия приложения (APK): ' + inf.apk + (inf.remoteApk > inf.apk ? '   → доступна ' + inf.remoteApk : ''),
         'На сервере: игра ' + (inf.remoteWeb || '—') + '.  Статус: ' + inf.result,
       ].concat(err ? [err] : []) : ['Версия игры: ' + G.webVersion, 'Обновление по воздуху работает в Android-приложении.'];
-      Art.rr(ctx, 140, 448, 1000, 170, 24); ctx.fillStyle = 'rgba(30,14,70,0.75)'; ctx.fill();
-      lines.forEach((ln, i) => UI.text(ctx, ln, 640, 474 + i * 38, 20, i === 3 ? '#ffb3c8' : '#fff', 'center', false));
-      if (this.msg) UI.text(ctx, this.msg, 640, 700, 22, '#ffd23f', 'center', true);
+      Art.rr(ctx, 140, 505, 1000, 135, 24); ctx.fillStyle = 'rgba(30,14,70,0.75)'; ctx.fill();
+      lines.forEach((ln, i) => UI.text(ctx, ln, 640, 528 + i * 32, 20, i === 3 ? '#ffb3c8' : '#fff', 'center', false));
+      if (this.msg) UI.text(ctx, this.msg, 360, 678, 22, '#ffd23f', 'center', true);
     }
   },
   drawTop(ctx) { },
