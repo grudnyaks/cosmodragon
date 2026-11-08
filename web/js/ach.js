@@ -36,9 +36,16 @@ const ACH = (function () {
     { id: 'style5', title: 'Модник', desc: 'Купи 5 нарядов', icon: 'hat', goal: 5, val: () => st('outfits') },
     { id: 'paint5', title: 'Художник', desc: 'Нарисуй 5 картинок для альбома', icon: 'palette', goal: 5, val: () => st('paint') },
     { id: 'duo5', title: 'Команда', desc: 'Выиграй 5 игр вдвоём', icon: 'duo', goal: 5, val: () => sumGames('duo') },
-    { id: 'allgames', title: 'Всё попробовал', desc: 'Выиграй во всех 12 играх', icon: 'trophy', goal: 12, val: () => P().games.filter(g => sumGames(g.scene) > 0).length },
+    { id: 'allgames', title: 'Всё попробовал', desc: 'Выиграй во всех 12 играх', icon: 'trophy', goal: 12, val: () => ['treasure', 'puzzle', 'catch', 'memory', 'bowling', 'maze', 'pop', 'fishing', 'simon', 'stars', 'bunny', 'tower'].filter(k => sumGames(k) > 0).length },
+    { id: 'beacon1', title: 'Первый маяк', desc: 'Зажги маяк на планете', icon: 'star', ok: () => st('beacons') >= 1 },
+    { id: 'beacon6', title: 'Хранитель маяков', desc: 'Зажги 6 маяков', icon: 'star', goal: 6, val: () => PLANETS.filter(p => S.data.planets[p.id].beacon).length },
+    { id: 'beacon12', title: 'Свет галактики', desc: 'Зажги все 12 маяков', icon: 'galaxy', goal: 12, val: () => PLANETS.filter(p => S.data.planets[p.id].beacon).length },
+    { id: 'travel', title: 'Путешественник', desc: 'Побывай на всех планетах', icon: 'galaxy', goal: 12, val: () => PLANETS.filter(p => S.data.planets[p.id].visited).length },
+    { id: 'thief1', title: 'Догонялки', desc: 'Догони воришку в чёрном шлеме', icon: 'star', ok: () => st('thiefCaught') >= 1 },
+    { id: 'tenek', title: 'Тайна чёрного шлема', desc: 'Узнай, кто прятался под шлемом', icon: 'moon', ok: () => T().friend },
   ];
-  function sumGames(k) { return PS().games[k] || 0; }
+  // победы в игре на всех планетах вместе
+  function sumGames(k) { let n = 0; for (const p of PLANETS) n += (S.data.planets[p.id].games[k] || 0); return n; }
   return list;
 })();
 

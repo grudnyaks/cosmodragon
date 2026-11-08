@@ -6,12 +6,14 @@ G.scenes.duo = {
     this.goal = Math.min(20 + lvl * 2, 40); this.time = 60;
     this.got = 0; this.won = false; this.lost = false;
     this.items = []; this.spawnT = 0.6; this.speed = Math.min(160 + lvl * 15, 340);
-    this.drs = [{ id: 'dark', x: 320, tx: 320, min: 90, max: 570, mouth: 0, squash: 0, shake: 0, happy: 0 },
-                { id: 'light', x: 960, tx: 960, min: 710, max: 1190, mouth: 0, squash: 0, shake: 0, happy: 0 }];
+    // два дракончика: здешние, а если на планете один — к нему прилетает Дракоша (или Пушок)
+    const here = PD().map(d => d.id), a = here[0] || 'dark', b = here[1] || (a === 'dark' ? 'light' : 'dark');
+    this.drs = [{ id: a, x: 320, tx: 320, min: 90, max: 570, mouth: 0, squash: 0, shake: 0, happy: 0 },
+                { id: b, x: 960, tx: 960, min: 710, max: 1190, mouth: 0, squash: 0, shake: 0, happy: 0 }];
     this.fingers = {};
     UI.homeButton(this);
     this.again = UI.add(this, { x: 640, y: 330, r: 70, icon: 'replay', color: '#41d982', pulse: true, hidden: true, onTap: () => G.go('duo') });
-    Voice.say('Играем вдвоём! Один ведёт ' + Care.acc('dark') + ' слева, другой — ' + Care.acc('light') + ' справа. Ловите вкусняшки вместе!');
+    Voice.say('Играем вдвоём! Один ведёт ' + Care.acc(a) + ' слева, другой — ' + Care.acc(b) + ' справа. Ловите вкусняшки вместе!');
   },
   side(x) { return x < 640 ? 0 : 1; },
   pdown(id, x) { const s = this.side(x); this.fingers[id] = s; this.drs[s].tx = x; },
@@ -58,7 +60,7 @@ G.scenes.duo = {
   win() {
     this.won = true; this.items.length = 0; GW('duo');
     for (const d of this.drs) { d.happy = 4; Care.add(d.id, 'fun', 15); }
-    Sound.win(); Sound.purr(1.6, { dragon: 'dark' });
+    Sound.win(); Sound.purr(1.6, { dragon: this.drs[0].id });
     UI.reward(6, 640, 520);
     for (let i = 0; i < 3; i++) setTimeout(() => G.burst(M.rnd(250, 1050), M.rnd(150, 400), { kind: 'confetti', n: 30, speed: 380 }), i * 250);
     Voice.say('Ура! Вы отличная команда!');
@@ -80,8 +82,8 @@ G.scenes.duo = {
     UI.progress(ctx, 440, 26, 400, 46, this.got / this.goal, '#ff7eb6');
     UI.text(ctx, this.got + ' / ' + this.goal, 640, 50, 30, '#fff', 'center', true);
     UI.text(ctx, Math.max(0, Math.ceil(this.time)) + ' сек', 1000, 50, 28, '#fff', 'center', true);
-    UI.text(ctx, Care.name('dark'), 320, 140, 26, '#fff', 'center', true);
-    UI.text(ctx, Care.name('light'), 960, 140, 26, '#fff', 'center', true);
+    UI.text(ctx, Care.name(this.drs[0].id), 320, 140, 26, '#fff', 'center', true);
+    UI.text(ctx, Care.name(this.drs[1].id), 960, 140, 26, '#fff', 'center', true);
   },
   drawTop(ctx) { UI.drawCounterTopRight(ctx); if ((this.won || this.lost) && !this.again.hidden) UI.text(ctx, 'Ещё раз?', 640, 235, 48, '#fff', 'center', true); },
 };

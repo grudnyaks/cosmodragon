@@ -84,7 +84,7 @@ G.scenes.lair = {
     if (Math.abs(x - 1040) < 140 && y > 180 && y < 520 && this.caged().length) {
       Sound.purr(1, { dragon: this.caged()[0] }); Voice.say(V().keys >= 3 ? 'Нажми на красную кнопку, чтобы открыть клетку!' : 'Дракончики ждут тебя! Найди три ключа в играх.');
     }
-    if (Math.abs(x - 420) < 90 && Math.abs(y - 250) < 80) { Sound.pop(1); Voice.say(V().friend ? 'Это фото: Шипун и его друзья-дракончики!' : 'Ш-ш-ш! Это мой план: поймать Дракошу и Пушка!'); }
+    if (Math.abs(x - 420) < 90 && Math.abs(y - 250) < 80) { Sound.pop(1); Voice.say(V().friend ? 'Это фото: Шипун и его друзья-дракончики!' : 'Ш-ш-ш! Это мой план: поймать всех дракончиков галактики!'); }
   },
   update(dt) {
     const s = this.sn;
@@ -107,9 +107,9 @@ G.scenes.lair = {
     // гирлянда после дружбы
     if (friend) for (let i = 0; i < 14; i++) { const x = 150 + i * 75, y = 160 + Math.sin(i * 0.9) * 18; Art.ell(ctx, x, y, 9, 9, ['#ff7eb6', '#ffd23f', '#7ee8ff', '#41d982'][i % 4]); }
     // сундук
-    Art.chest(ctx, 230, 620, 0.9, t, this.chestK.k);
+    Art.lairChest(ctx, 230, 620, 0.9, t, this.chestK.k);
     // грибы
-    LAIR_SHROOMS.forEach(([mx, my, c], i) => Art.mushroom(ctx, mx, my, 0.9, c, this.sh[i].sq));
+    LAIR_SHROOMS.forEach(([mx, my, c], i) => Art.bouncyShroom(ctx, mx, my, 0.9, c, this.sh[i].sq));
     // клетка с дракончиками (если Шипун их утащил)
     const caged = this.caged();
     if (caged.length) {
@@ -117,8 +117,7 @@ G.scenes.lair = {
       Art.cage(ctx, 1040, 270, 0.85, t, 0);
     } else if (friend) {
       // дракончики пришли в гости
-      Art.dragon(ctx, 1000, 640, 0.5, { kind: 'dark', t, happy: this.sn.happy > 0, look: -1 });
-      Art.dragon(ctx, 1120, 630, 0.46, { kind: 'light', t: t + 1, happy: this.sn.happy > 0, look: -1 });
+      PD().slice(0, 2).forEach((d, i) => Art.dragon(ctx, 1000 + i * 120, 640 - i * 10, 0.48, { kind: d.id, t: t + i, happy: this.sn.happy > 0, look: -1 }));
     }
     // Шипун
     const talk = this.sn.talk > 0 && Math.sin(t * 14) > 0;

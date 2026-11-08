@@ -95,11 +95,14 @@ const Villain = {
     if (c != null) { who = STORY[c].who; mode = STORY[c].mode; villain = STORY[c].villain; }
     else { villain = M.pick(['snake', 'comet']); who = M.pick(['dark', 'light', 'both', 'dark', 'light']); mode = M.pick(villain === 'comet' ? COMET_MODES : RESCUE_MODES); }
     if (who === 'one') who = M.pick(['dark', 'light']);
-    return { ids: who === 'both' ? ['dark', 'light'] : [who], mode, villain };
+    // драконы текущей планеты: «dark» — первый, «light» — второй
+    const here = PD().map(d => d.id);
+    let ids = who === 'both' ? here.slice() : [here[who === 'light' && here.length > 1 ? 1 : 0]];
+    return { ids, mode, villain };
   },
   start(p) {
     const v = V();
-    v.taken = p.ids.slice(); v.keys = 0; v.mode = p.mode; v.villain = p.villain || 'snake'; v.wins = 0; v.line = p.line || this.sayLine(this.chapter(), v.villain);
+    v.taken = p.ids.slice(); v.lastIds = p.ids.slice(); v.planet = S.data.planet; v.keys = 0; v.mode = p.mode; v.villain = p.villain || 'snake'; v.wins = 0; v.line = p.line || this.sayLine(this.chapter(), v.villain);
     stat('kidnapped');
     S.save();
   },
@@ -115,13 +118,21 @@ const Villain = {
     stat('rescued'); S.save();
     return c;
   },
-  sayLine(c, who) { return c != null ? STORY[c].say : M.pick((who || V().villain) === 'comet' ? COMET_HIDE.say : VILLAIN_HIDE.say); },
-  loseLine(c, who) { return c != null ? STORY[c].lose : M.pick((who || V().villain) === 'comet' ? COMET_HIDE.lose : VILLAIN_HIDE.lose); },
+  sayLine(c, who, ids) { return this.adapt(c != null ? STORY[c].say : M.pick((who || V().villain) === 'comet' ? COMET_HIDE.say : VILLAIN_HIDE.say), ids); },
+  loseLine(c, who, ids) { return this.adapt(c != null ? STORY[c].lose : M.pick((who || V().villain) === 'comet' ? COMET_HIDE.lose : VILLAIN_HIDE.lose), ids); },
+  // главы написаны про Дракошу и Пушка; на других планетах подставляем имена здешних драконов
+  adapt(text, ids) {
+    ids = ids || (V().taken.length ? V().taken : V().lastIds) || [];
+    if (!text || !ids.length || ids.every(id => id === 'dark' || id === 'light')) return text;
+    const a = DRAGON_BY_ID[ids[0]], b = DRAGON_BY_ID[ids[1] || ids[0]];
+    return text.replace(/Дракошу/g, a.acc).replace(/Дракоши/g, a.gen).replace(/Дракоше/g, a.dat).replace(/Дракоша/g, a.name)
+      .replace(/Пушка/g, b.acc).replace(/Пушку/g, b.dat).replace(/Пушок/g, b.name).replace(/ такой беленький, прямо как звёздочка/g, ' такой красивый, прямо как звёздочка');
+  },
   // где сейчас дракончики (для подсказок)
   where() { return V().villain === 'comet' ? 'Комета Шкода унесла дракончиков к звёздам!' : 'Шипун держит дракончиков в Тёмной пещере!'; },
   // «Найди три ключа, чтобы спасти …»
   task(ids) {
-    const n = ids.length > 1 ? Care.both() : Care.acc(ids[0]);
+    const n = ids.length > 1 ? Care.both(ids) : Care.acc(ids[0]);
     if (V().villain === 'comet') return 'Выигрывай игры и собери три звезды, чтобы вернуть ' + n + '!';
     return 'Выигрывай игры и найди три ключа, чтобы спасти ' + n + '!';
   },

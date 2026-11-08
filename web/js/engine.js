@@ -16,16 +16,26 @@ const G = {
   G.cv = cv; G.ctx = ctx;
   let scale = 1, ox = 0, oy = 0, dpr = 1;
 
+  // качество: если телефон не успевает рисовать, плотность пикселей снижается (2 → 1.5 → 1)
+  G.quality = 2;
+  let lastW = 0, lastH = 0, lastD = 0;
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, G.quality);
     const w = window.innerWidth, h = window.innerHeight;
+    if (!w || !h) return;
+    // холст пересоздаём только при настоящей смене размера (иначе экран моргает,
+    // когда Android на миг показывает системные панели)
+    if (w === lastW && h === lastH && dpr === lastD) return;
+    lastW = w; lastH = h; lastD = dpr;
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     scale = Math.min(w / G.W, h / G.H);
     ox = (w - G.W * scale) / 2; oy = (h - G.H * scale) / 2;
     G.view = { x0: -ox / scale, y0: -oy / scale, x1: G.W + ox / scale, y1: G.H + oy / scale };
   }
-  window.addEventListener('resize', resize);
+  let rzT = 0;
+  window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(resize, 150); });
   resize();
+  G.resize = resize;
 
   function toV(e) {
     const r = cv.getBoundingClientRect();
@@ -199,16 +209,22 @@ const G = {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = '#1b1240'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * ox, dpr * oy);
-    const s = G.scene;
+    const s = G.scene, t0 = performance.now();
+    // каждая часть кадра защищена: ошибка в одной не стирает остальные
+    const safe = (f) => { ctx.save(); try { f(); } catch (e) { if (!G.errLog) G.errLog = []; if (G.errLog.length < 20) G.errLog.push(G.sceneName + ': ' + e.message); console.error(e); } ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; };
     if (s) {
-      s.update && s.update(dt);
-      s.draw && s.draw(ctx);
-      if (s.buttons) for (const b of s.buttons) if (!b.hidden) UI.drawButton(ctx, b);
-      s.drawTop && s.drawTop(ctx);
-      if (G.overlay && G.overlay.frame) G.overlay.frame(ctx, dt);
+      safe(() => s.update && s.update(dt));
+      safe(() => s.draw && s.draw(ctx));
+      safe(() => { if (s.buttons) for (const b of s.buttons) if (!b.hidden) UI.drawButton(ctx, b); });
+      safe(() => s.drawTop && s.drawTop(ctx));
+      if (G.overlay && G.overlay.frame) safe(() => G.overlay.frame(ctx, dt));
     }
-    drawParticles(ctx, dt);
-    drawToasts(ctx, dt);
+    safe(() => drawParticles(ctx, dt));
+    safe(() => drawToasts(ctx, dt));
+    // следим за скоростью: долгие кадры 3 секунды подряд — снижаем качество
+    const ms = performance.now() - t0;
+    G.slow = (G.slow || 0) * 0.97 + ms * 0.03;
+    if (G.slow > 30 && G.quality > 1 && G.t - (G.qT || 0) > 3) { G.quality = G.quality > 1.5 ? 1.5 : 1; G.qT = G.t; G.slow = 0; resize(); }
     if (G.fade > 0) {
       ctx.fillStyle = 'rgba(27,18,64,' + G.fade + ')';
       const v = G.view; ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);

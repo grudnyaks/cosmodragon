@@ -4,14 +4,15 @@ G.scenes.wardrobe = {
   enter() {
     UI.homeButton(this);
     this.id = buddy();
-    this.tabs = DRAGONS.map((D, i) => UI.add(this, { x: 150 + i * 220, y: 150, w: 200, h: 60, label: Care.name(D.id), fontSize: 24, color: '#5a5a7a', onTap: () => { this.id = D.id; this.sync(); Sound.purr(0.8, { dragon: D.id }); } }));
+    this.list = PD().length ? PD() : [DRAGON_BY_ID[buddy()]];
+    this.tabs = this.list.map((D, i) => UI.add(this, { x: 150 + i * 220, y: 150, w: 200, h: 60, label: Care.name(D.id), fontSize: 24, color: '#5a5a7a', onTap: () => { this.id = D.id; this.sync(); Sound.purr(0.8, { dragon: D.id }); } }));
     this.items = OUTFITS.map((o, i) => UI.add(this, { x: 640 + (i % 4) * 150, y: 210 + Math.floor(i / 4) * 160, r: 62, color: '#ffffff', item: o.id,
       draw: (ctx) => this.drawItem(ctx, o), onTap: () => this.tap(o) }));
     this.sync();
     Voice.say('Это гардероб! Выбери наряд для дракончика. Новые наряды стоят вкусняшки.');
   },
   sync() {
-    this.tabs.forEach((b, i) => { b.color = DRAGONS[i].id === this.id ? '#ff7eb6' : '#5a5a7a'; b.label = Care.name(DRAGONS[i].id); });
+    this.tabs.forEach((b, i) => { b.color = this.list[i].id === this.id ? '#ff7eb6' : '#5a5a7a'; b.label = Care.name(this.list[i].id); });
   },
   tap(o) {
     if (!Care.owned(o.id)) {

@@ -1,12 +1,14 @@
-// Главный экран Ням-Ням: два дракончика с потребностями (как тамагочи), космонавт, ракета, игры и пещера Змея Шипуна
+// Главный экран планеты: её драконы с потребностями (как тамагочи), космонавт, ракета, маяк, игры и пещера Змея Шипуна
 'use strict';
 const ASTRO_ANIMS = ['wave', 'jump', 'dance', 'salute', 'spin', 'cheer'];
 const ASTRO_PHRASES = ['Привет!', 'Полетели за вкусняшками!', 'Дракончики — мои лучшие друзья!', 'Смотри, как я умею!', 'Космос такой большой!',
   'Я самый смелый космонавт!', 'Ура, приключения!', 'Давай поиграем!', 'Мой шлем блестит!', 'Звёзды мне подмигивают!',
-  'Кто тут самый весёлый? Я!', 'Здесь так красиво!', 'Опа! Прыжок!', 'На планете Ням-Ням так интересно!', 'Шипуна я не боюсь!'];
+  'Кто тут самый весёлый? Я!', 'Здесь так красиво!', 'Опа! Прыжок!', 'На этой планете так интересно!', 'Шипуна я не боюсь!'];
 const ROCKET_PHRASES = ['Бортовой компьютер: все системы в норме!', 'Топливо: сто процентов!', 'Ракета готова к полёту!',
   'Проверка двигателей. Отлично!', 'Внимание! Обнаружены вкусняшки!', 'Связь с Землёй установлена!', 'Курс на звёзды проложен!'];
-const DRAGON_SPOT = { dark: 575, light: 865 };
+const BEACON_X = 292;
+// места драконов: один — по центру, два — рядом
+function dragonSpots(ids) { return ids.length > 1 ? [575, 865] : [720]; }
 const CAVE_X = 1140;
 
 G.scenes.home = {
@@ -15,51 +17,65 @@ G.scenes.home = {
     Sound.preload();
     this.redirect = Care.asleep() ? 'sleeping' : null; this.tickT = 0; this.lateAsked = false;
     this.drs = {};
-    for (const d of DRAGONS) this.drs[d.id] = { id: d.id, x: DRAGON_SPOT[d.id], y: 600, lift: 0, squash: 0, mouth: 0, happyT: 0, fire: 0, flying: false, look: 0, tilt: 0,
-      blinkT: M.rnd(1, 4), blink: 0, taps: 0, carried: false };
+    this.here = PD(); const spots = dragonSpots(this.here);
+    this.here.forEach((d, i) => { this.drs[d.id] = { id: d.id, x: spots[i], y: 600, lift: 0, squash: 0, mouth: 0, happyT: 0, fire: 0, flying: false, look: 0, tilt: 0,
+      blinkT: M.rnd(1, 4), blink: 0, taps: 0, carried: false }; });
+    this.bc = { light: 0 };
     this.as = { anim: 'idle', at: 0, until: 0, phrase: 0 };
     this.rk = { lift: 0, flame: 0, busy: false, act: 0, pilotWave: 0, lights: 0 };
     this.cave = { peek: 0, eyes: 1, talk: 0 };
-    this.sp = null; this.cm = null; this.busy = false; this.feedTurn = 0;
+    this.sp = null; this.cm = null; this.tf = null; this.busy = false; this.feedTurn = 0;
     // 12 игр в нижнем ряду
     const games = P().games.concat([{ scene: 'duo', icon: 'duo', color: '#ff9a3c' }]), n = games.length, step = 91, r = 39;
     const x0 = 640 - (n - 1) * step / 2;
     this.gameBtns = games.map((g, i) => UI.add(this, { x: x0 + i * step, y: 668, r, icon: g.icon, color: g.color, bob: true, iconScale: 1.1,
       onTap: () => { Voice.stop(); G.go(g.scene); } }));
-    this.feedBtn = UI.add(this, { x: 720, y: 470, r: 44, color: '#ffd23f', draw: (ctx) => Art.treat(ctx, 0, 0, 4, 0.6, G.t), onTap: () => this.feed() });
+    this.feedBtn = UI.add(this, { x: PD().length > 1 ? 720 : 900, y: 470, r: 44, color: '#ffd23f', draw: (ctx) => Art.treat(ctx, 0, 0, 4, 0.6, G.t), onTap: () => this.feed() });
     // имя и четыре потребности над каждым дракончиком
     this.petUI = {};
-    for (const D of DRAGONS) {
-      const x = DRAGON_SPOT[D.id], ui = this.petUI[D.id] = {};
-      ui.name = UI.add(this, { x, y: 300, w: 190, h: 44, label: Care.name(D.id), fontSize: 24, color: D.id === 'dark' ? '#4a4660' : '#c8b8e8',
+    for (const D of this.here) {
+      const x = this.drs[D.id].x, ui = this.petUI[D.id] = {};
+      ui.name = UI.add(this, { x, y: 300, w: 190, h: 44, label: Care.name(D.id), fontSize: 24, color: Art.mix(D.body, '#5a4a8a', 0.5),
         onTap: () => { Voice.stop(); G.go('name', { id: D.id }); } });
       ui.needs = NEEDS.map((N, i) => UI.add(this, { x: x - 87 + i * 58, y: 358, r: 25, color: '#ffffff', need: N.id,
         draw: (ctx) => this.drawNeed(ctx, D.id, N), onTap: () => this.needTap(D.id, N) }));
     }
     const tx = i => G.view.x0 + 52 + i * 78;
     UI.add(this, { x: tx(0), y: 56, r: 33, icon: S.data.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
-    UI.add(this, { x: tx(1), y: 56, r: 33, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
-    UI.add(this, { x: tx(2), y: 56, r: 33, icon: 'snake', color: '#8f6cf2', onTap: () => { Voice.stop(); G.go('story'); } });
-    UI.add(this, { x: tx(3), y: 56, r: 33, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
-    UI.add(this, { x: tx(4), y: 56, r: 33, icon: 'hat', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('wardrobe'); } });
-    UI.add(this, { x: tx(5), y: 56, r: 33, icon: 'palette', color: '#41d982', onTap: () => { Voice.stop(); G.go('paint'); } });
+    this.mapBtn = UI.add(this, { x: tx(1), y: 56, r: 33, icon: 'galaxy', color: '#8f6cf2', onTap: () => { Voice.stop(); G.go('map'); } });
+    UI.add(this, { x: tx(2), y: 56, r: 33, icon: 'book', color: '#ff9a3c', onTap: () => { Voice.stop(); G.go('intro'); } });
+    UI.add(this, { x: tx(3), y: 56, r: 33, icon: 'snake', color: '#5b3a8c', onTap: () => { Voice.stop(); G.go('story'); } });
+    UI.add(this, { x: tx(4), y: 56, r: 33, icon: 'trophy', color: '#ff7eb6', onTap: () => { Voice.stop(); G.go('ach'); } });
+    UI.add(this, { x: tx(5), y: 56, r: 33, icon: 'hat', color: '#ffd23f', onTap: () => { Voice.stop(); G.go('wardrobe'); } });
+    UI.add(this, { x: tx(6), y: 56, r: 33, icon: 'palette', color: '#41d982', onTap: () => { Voice.stop(); G.go('paint'); } });
     this.bedBtn = UI.add(this, { x: 720, y: 190, w: 380, h: 80, label: 'Уложить спать', icon: 'moon', iconX: -140, fontSize: 30, color: '#5a4ab0', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('sleep', { mode: 'bedtime' }); } });
-    this.updBtn = UI.add(this, { x: tx(6), y: 56, r: 33, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
+    this.updBtn = UI.add(this, { x: tx(7), y: 56, r: 33, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     this.rescueBtn = UI.add(this, { x: 640, y: 180, w: 470, h: 84, label: 'Спасти дракончиков!', icon: 'sword', iconX: -185, fontSize: 32, color: '#ff3b5c', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go(V().villain === 'comet' ? 'comet' : 'rescue'); } });
-    // Шипун приходит, когда набралось достаточно побед
-    if (Villain.due()) setTimeout(() => this.kidnap(), 1600);
+    // маяк планеты
+    this.beaconBtn = UI.add(this, { x: 640, y: 180, w: 440, h: 84, label: 'Зажечь маяк!', icon: 'star', iconX: -165, fontSize: 32, color: '#ffb23a', pulse: true, hidden: true, onTap: () => this.lightBeacon() });
+    const nx = nextPlanet(P().id);
+    this.flyBtn = UI.add(this, { x: 640, y: 180, w: 500, h: 84, label: nx ? 'Лететь: ' + nx.name : '', icon: 'galaxy', iconX: -190, fontSize: 30, color: '#8f6cf2', pulse: true, hidden: true,
+      onTap: () => { Voice.stop(); G.go('map', { reveal: nx && nx.id }); } });
+    // злодеи: Шипун (или Шкода) — по победам; воришка — на дальних планетах
+    if (Villain.due() && this.here.length) setTimeout(() => this.kidnap(), 1600);
+    else if (typeof Thief !== 'undefined' && Thief.due()) setTimeout(() => Thief.appear(this), 1600);
     else setTimeout(() => this.hello(), 700);
   },
-  present() { return DRAGONS.filter(d => !isTaken(d.id) && !this.drs[d.id].carried).map(d => d.id); },
+  present() { return this.here.filter(d => !isTaken(d.id) && !this.drs[d.id].carried).map(d => d.id); },
   hello() {
     if (G.scene !== this || this.busy) return;
     const v = V();
     if (v.taken.length) { Voice.say(v.keys >= 3 ? (v.villain === 'comet' ? 'Все звёзды собраны! Нажми на красную кнопку и поймай комету!' : 'Все ключи найдены! Нажми на красную кнопку, чтобы спасти дракончиков!') : Villain.where() + ' ' + Villain.task(v.taken)); return; }
+    if (!this.here.length) { Voice.say(typeof Thief !== 'undefined' ? Thief.emptyLine() : 'Гнездо пустое.'); return; }
+    const ps = PS();
+    if (!ps.beacon && (ps.earned || 0) >= BEACON_GOAL && this.canLight()) { Voice.say('Ты собрал ' + BEACON_GOAL + ' ' + P().treatGen + '! Нажми на кнопку, чтобы зажечь маяк!'); return; }
     if (Care.late()) { this.askBed(); return; }
-    for (const D of DRAGONS) { const n = Care.lowest(D.id, 35); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); Care.data().lastCall = Date.now(); return; } }
-    Voice.say('Привет! Дракончики рады тебя видеть!');
+    for (const D of this.here) { const n = Care.lowest(D.id, 35); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); Care.data().lastCall = Date.now(); return; } }
+    const nx = nextPlanet(P().id);
+    if (ps.beacon && nx && !PS(nx.id).visited) { Voice.say('Маяк сияет! Нажми на кнопку и полетели на планету ' + nx.name + '!'); return; }
+    Voice.say(this.here.length > 1 ? 'Привет! Дракончики рады тебя видеть!' : 'Привет! ' + Care.name(this.here[0].id) + ' рад тебя видеть!');
   },
   dragonHit(id, x, y) {
     const d = this.drs[id], s = 0.72;
@@ -70,6 +86,7 @@ G.scenes.home = {
     for (const id of this.present()) if (this.dragonHit(id, x, y)) return this.pet(id);
     if (Math.abs(x - CAVE_X) < 110 && y > 420 && y < 640) return this.tapCave();
     if (Math.abs(x - 390) < 55 && y > 420 && y < 630) return this.tapAstro();
+    if (Math.abs(x - BEACON_X) < 50 && y > 300 && y < 530) return this.tapBeacon();
     if (Math.abs(x - 170) < 85 && y > 120 - this.rk.lift && y < 600 - this.rk.lift) return this.tapRocket();
   },
   // ---------- пещера Шипуна ----------
@@ -80,6 +97,28 @@ G.scenes.home = {
     G.tween(c, { peek: 1 }, 0.4, G.ease.outBack);
     this.busy = true;
     G.wait(0.7, () => { this.busy = false; Voice.stop(); G.go('lair'); });
+  },
+  // ---------- маяк ----------
+  canLight() { return P().id !== 'night' || T().friend; },
+  tapBeacon() {
+    const ps = PS(), left = Math.max(0, BEACON_GOAL - (ps.earned || 0));
+    Sound.chime(ps.beacon ? 1.2 : 0.7);
+    if (ps.beacon) return Voice.say('Маяк сияет! Его луч показывает путь к новой планете.');
+    if (!this.canLight()) return Voice.say('Маяк Сумрака не загорается… Кто-то унёс его свет. Может быть, воришка в чёрном шлеме знает, где он?');
+    if (!left) return this.lightBeacon();
+    Voice.say('Чтобы зажечь маяк, собери ещё ' + left + ' ' + P().treatGen + '. Играй в игры!');
+  },
+  lightBeacon() {
+    const ps = PS();
+    if (ps.beacon || this.busy || !this.canLight()) return;
+    ps.beacon = true; this.bc.light = 0;
+    const nx = nextPlanet(P().id);
+    if (nx && !S.data.unlocked.includes(nx.id)) S.data.unlocked.push(nx.id);
+    S.save(); stat('beacons');
+    this.busy = true; Sound.magic();
+    G.tween(this.bc, { light: 1 }, 2, G.ease.inOutQuad, () => { this.busy = false; });
+    for (let i = 0; i < 8; i++) setTimeout(() => { G.burst(M.rnd(200, 1100), M.rnd(80, 350), { kind: 'star', n: 26, speed: 340, g: 120 }); Sound.chime(M.rnd(0.8, 1.4)); }, i * 350);
+    Voice.say(P().beaconText);
   },
   // ---------- космонавт ----------
   tapAstro() {
@@ -175,7 +214,7 @@ G.scenes.home = {
   kidnap() {
     if (G.scene !== this || this.busy || !Villain.due()) return;
     const plan = Villain.plan();
-    plan.line = Villain.sayLine(Villain.chapter(), plan.villain);
+    plan.line = Villain.sayLine(Villain.chapter(), plan.villain, plan.ids);
     this.busy = true;
     if (plan.villain === 'comet') return this.cometKidnap(plan);
     const sp = this.sp = { head: CAVE_X + 60, y: 560, carry: [] };
@@ -236,11 +275,11 @@ G.scenes.home = {
       const c = Care.data();
       if (!this.busy && !Voice.cur && Date.now() - (c.lastCall || 0) > 50000) {
         if (Care.late() && !this.lateAsked) this.askBed();
-        else for (const D of DRAGONS) { if (isTaken(D.id)) continue; const n = Care.lowest(D.id, 25); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); break; } }
+        else for (const D of this.here) { if (isTaken(D.id)) continue; const n = Care.lowest(D.id, 25); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); break; } }
         c.lastCall = Date.now();
       }
     }
-    for (const D of DRAGONS) { const ui = this.petUI[D.id], hide = isTaken(D.id) || this.drs[D.id].carried; ui.name.hidden = hide; ui.name.label = Care.name(D.id); ui.needs.forEach(b => { b.hidden = hide; }); }
+    for (const D of this.here) { const ui = this.petUI[D.id], hide = isTaken(D.id) || this.drs[D.id].carried; ui.name.hidden = hide; ui.name.label = Care.name(D.id); ui.needs.forEach(b => { b.hidden = hide; }); }
     for (const id in this.drs) {
       const d = this.drs[id];
       d.blinkT -= dt;
@@ -256,17 +295,23 @@ G.scenes.home = {
     this.rescueBtn.hidden = !(v.taken.length && v.keys >= 3 && !this.busy);
     if (v.taken.length) this.rescueBtn.label = 'Спасти ' + (v.taken.length > 1 ? 'дракончиков' : Care.custom(v.taken[0]) ? Care.name(v.taken[0]) : DRAGON_BY_ID[v.taken[0]].acc) + '!';
     this.feedBtn.hidden = !this.present().length || this.busy;
+    const ps = PS(), nx = nextPlanet(P().id);
+    this.beaconBtn.hidden = !(!ps.beacon && (ps.earned || 0) >= BEACON_GOAL && this.canLight() && !this.busy && this.rescueBtn.hidden);
+    this.flyBtn.hidden = !(ps.beacon && nx && !PS(nx.id).visited && !this.busy && this.rescueBtn.hidden && this.beaconBtn.hidden);
+    this.mapBtn.pulse = !!(nx && S.data.unlocked.includes(nx.id) && !PS(nx.id).visited);
     if (Care.late() && !this.busy) { this.bedBtn.hidden = false; this.rescueBtn.y = 270; }
   },
   draw(ctx) {
     const t = G.t, v = V();
     World.bg(ctx, t, { noBeacon: true });
+    this.drawBeacon(ctx, t);
     Art.lair(ctx, CAVE_X, 612, 1, t, { peek: this.cave.peek, talk: this.cave.talk > 0, friend: v.friend, eyes: !this.sp });
     const rk = this.rk;
     Art.rocket(ctx, 170, World.GROUND + 25 - rk.lift, 0.8, { t, flame: rk.flame, glowBase: rk.lift < 5, pilot: rk.pilotWave > 0, pilotWave: rk.pilotWave > 0 });
     if (rk.lights > 0) for (let i = 0; i < 4; i++) { const on = Math.sin(t * 16 + i) > 0; if (on) { ctx.save(); ctx.globalAlpha = 0.6; Art.ell(ctx, 170 + (i - 1.5) * 40, World.GROUND + 25 - rk.lift - 140 - (i % 2) * 120, 14, 14, ['#ff3b5c', '#41ff82', '#ffe14a', '#7ee8ff'][i]); ctx.restore(); } }
     Art.astronaut(ctx, 390, 600, 1.1, { t, anim: this.as.anim, at: this.as.at, look: M.clamp((G.pointer.x - 390) / 500, -1, 1) });
-    for (const D of DRAGONS) {
+    if (!this.here.length) this.drawNest(ctx, t);
+    for (const D of this.here) {
       const d = this.drs[D.id];
       if (isTaken(D.id) || d.carried) { // пустое место и следы Шипуна
         ctx.save(); ctx.globalAlpha = 0.35; Art.ell(ctx, d.x, d.y, 80, 16, '#3a1a3a'); ctx.restore();
@@ -276,7 +321,8 @@ G.scenes.home = {
       Art.dragon(ctx, d.x, d.y, 0.72, { kind: D.id, t: t + (D.id === 'light' ? 1.3 : 0), blink: yawn > 0.2 ? 0.8 : d.blink, mouth: Math.max(d.mouth, yawn), look: d.look, squash: d.squash,
         happy: d.happyT > 0 && d.mouth < 0.1, lift: d.lift, flying: d.flying, fire: d.fire, tilt: d.tilt, mood: d.happyT > 0 ? 'happy' : Care.mood(D.id) });
       const low = d.happyT > 0 ? null : Care.lowest(D.id, 30);
-      if (low && !this.busy) this.thought(ctx, d.x + (D.id === 'dark' ? -110 : 110), d.y - 215 - d.lift, low, t, D.id === 'dark' ? 1 : -1);
+      const left = d.x < 700;
+      if (low && !this.busy) this.thought(ctx, d.x + (left ? -110 : 110), d.y - 215 - d.lift, low, t, left ? 1 : -1);
     }
     if (this.sp) {
       const pts = this.serpentPts(this.sp.head, this.sp.y, t);
@@ -289,7 +335,31 @@ G.scenes.home = {
       if (n) Art.bubble(ctx, cm.x - 150, cm.y + 125, n > 1 ? 100 : 78, t);
       Art.comet(ctx, cm.x, cm.y, 0.8, t, { dir: cm.dir, talk: !!Voice.cur });
     }
+    if (this.tf) {
+      const f = this.tf;
+      Art.astronaut(ctx, f.x, f.y + 120, 0.9, { t, dark: true, jet: 1, eyes: true, tail: T().ch >= 2, flip: !f.flip });
+      if (f.sack > 0) Art.sack(ctx, f.x + (f.flip ? -60 : 60), f.y + 60, 0.5 + f.sack * 0.4, t);
+    }
     if (v.taken.length && !this.sp && !this.cm) this.drawKeys(ctx, t);
+  },
+  // маяк: башня наполняется светом по мере сбора вкусняшек
+  drawBeacon(ctx, t) {
+    const ps = PS(), k = Math.min(1, (ps.earned || 0) / BEACON_GOAL), lit = ps.beacon;
+    Art.beacon(ctx, BEACON_X, 520, 0.72, lit, t, P().beacon);
+    if (!lit) {
+      const x = BEACON_X, y0 = 470, h = 120;
+      Art.rr(ctx, x - 8, y0 - h, 16, h, 8); ctx.fillStyle = 'rgba(20,10,50,0.6)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.stroke();
+      if (k > 0) { Art.rr(ctx, x - 7, y0 - h * k + 2, 14, h * k - 4 > 6 ? h * k - 4 : 6, 7); ctx.fillStyle = k >= 1 ? '#ffe14a' : '#ffd23f'; ctx.fill(); }
+      ctx.save(); ctx.globalAlpha = 0.85; Art.rr(ctx, x - 44, y0 + 32, 88, 28, 14); ctx.fillStyle = 'rgba(20,10,50,0.65)'; ctx.fill(); ctx.restore();
+      UI.text(ctx, Math.min(BEACON_GOAL, ps.earned || 0) + '/' + BEACON_GOAL, x, y0 + 53, 19, '#ffe9a8', 'center', false);
+    }
+    if (this.bc.light > 0 && this.bc.light < 1) { ctx.save(); ctx.globalAlpha = Math.sin(this.bc.light * Math.PI) * 0.6; ctx.fillStyle = '#fff8d0'; const v = G.view; ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); ctx.restore(); }
+  },
+  // пустое гнездо (на Сумраке, пока не раскрыта тайна воришки)
+  drawNest(ctx, t) {
+    Art.ell(ctx, 720, 610, 110, 28, '#5a3a2a'); Art.stroke(ctx, 3);
+    for (let i = 0; i < 9; i++) { const a = i * 0.7; ctx.beginPath(); ctx.moveTo(620 + i * 22, 600 + Math.sin(a) * 6); ctx.quadraticCurveTo(640 + i * 22, 590, 660 + i * 22, 606); Art.stroke(ctx, 4, '#8a5a3a'); }
+    ctx.save(); ctx.globalAlpha = 0.6; for (const [x, y] of [[560, 640], [520, 660], [480, 650]]) { Art.ell(ctx, x, y, 12, 7, '#1a1a3a'); } ctx.restore();
   },
   thought(ctx, x, y, N, t, dir) {
     const b = Math.sin(t * 3) * 4;

@@ -35,7 +35,7 @@ const Sound = (function () {
     purrBufs[pid] = [];
     for (let i = 1; i <= 4; i++) {
       fetch(voiceDir(pid) + 'purr' + i + '.mp3').then(r => r.arrayBuffer())
-        .then(b => new Promise((ok, bad) => ac.decodeAudioData(b, ok, bad)))
+        .then(b => new Promise((ok, bad) => { const pr = ac.decodeAudioData(b, ok, bad); if (pr && pr.catch) pr.catch(() => { }); }))
         .then(buf => purrBufs[pid].push(buf)).catch(() => { });
     }
   }
@@ -153,7 +153,7 @@ const Sound = (function () {
       }
       this.purrSynth(len);
     },
-    preload() { if (ok()) for (const d of DRAGONS) loadPurrs(d.voice); },
+    preload() { if (ok()) for (const d of (PD().length ? PD() : DRAGONS.slice(0, 1))) loadPurrs(d.voice); },
     // хихиканье злого воришки
     giggle() {
       if (!ok()) return; const t0 = ac.currentTime;

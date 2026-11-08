@@ -3,11 +3,12 @@
 const KEY = 'cosmodragon.save.v1';
 const S = {
   data: null,
-  planetDefaults() { return { treats: 5, games: {}, visited: false }; },
+  planetDefaults() { return { treats: 5, earned: 0, games: {}, visited: false, beacon: false }; },
+  thiefDefaults() { return { ch: 0, wins: 0, next: 4, friend: false, seen: [], active: false, stolen: 0 }; },
   villainDefaults() { return { taken: [], keys: 0, ch: 0, wins: 0, next: 3, rescues: 0, friend: false, friend2: false, villain: 'snake', hides: null, seen: [] }; },
   defaults() {
     return {
-      v: 3, planet: 'nyam', planets: {}, buddy: 'dark', villain: this.villainDefaults(),
+      v: 4, planet: 'nyam', planets: {}, unlocked: ['nyam'], buddy: 'dark', villain: this.villainDefaults(), thief: this.thiefDefaults(),
       music: true, voice: true, introSeen: false, diff: 4, breakMin: 0, playSec: 0, restUntil: 0,
       stats: {}, ach: {}, newAch: [],
     };
@@ -15,11 +16,13 @@ const S = {
   load() {
     let d = {};
     try { d = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { d = {}; }
-    if (d.v !== 3) d = this.migrate(d);
+    if (d.v === 3) { d.v = 4; d.unlocked = ['nyam']; d.planet = 'nyam'; if (d.planets && d.planets.nyam) d.planets.nyam.earned = d.planets.nyam.treats || 0; }
+    else if (d.v !== 4) d = this.migrate(d);
     this.data = Object.assign(this.defaults(), d);
-    this.data.planet = 'nyam';
-    this.data.planets.nyam = Object.assign(this.planetDefaults(), this.data.planets.nyam || {});
+    for (const p of PLANETS) this.data.planets[p.id] = Object.assign(this.planetDefaults(), this.data.planets[p.id] || {});
+    if (!PLANET_BY_ID[this.data.planet] || !this.data.unlocked.includes(this.data.planet)) this.data.planet = 'nyam';
     this.data.villain = Object.assign(this.villainDefaults(), this.data.villain || {});
+    this.data.thief = Object.assign(this.thiefDefaults(), this.data.thief || {});
     { const v = this.data.villain; if (v.hides == null) v.hides = Math.max(0, v.rescues - (v.friend ? 7 : v.rescues)); }
     if (!DRAGON_BY_ID[this.data.buddy]) this.data.buddy = 'dark';
   },
@@ -36,20 +39,24 @@ const S = {
     return d;
   },
   save() { try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { } },
-  addTreats(n) { PS().treats += n; if (n > 0) stat('treats', n); this.save(); },
+  addTreats(n) { const ps = PS(); ps.treats += n; if (n > 0) { ps.earned = (ps.earned || 0) + n; stat('treats', n); } this.save(); },
 };
 
-// Текущая планета (всегда Ням-Ням) и её сохранение
-function P() { return PLANETS[0]; }
-function PS() { return S.data.planets.nyam; }
+// Текущая планета, её сохранение и её драконы
+function P() { return PLANET_BY_ID[S.data.planet] || PLANETS[0]; }
+function PS(id) { return S.data.planets[id || S.data.planet]; }
+function PD() { return dragonsOf(S.data.planet); }
+function T() { return S.data.thief; }
+// сколько вкусняшек нужно, чтобы зажечь маяк планеты
+const BEACON_GOAL = 100;
 function V() { return S.data.villain; }
 function isTaken(id) { return V().taken.includes(id); }
 // Дракончик-напарник в мини-играх: тот, кого гладили последним, если он не у Змея
 function buddy() {
-  const b = S.data.buddy;
-  if (!isTaken(b)) return b;
-  const other = DRAGONS.find(d => !isTaken(d.id));
-  return other ? other.id : b;
+  const here = PD(), b = S.data.buddy;
+  if (here.some(d => d.id === b) && !isTaken(b)) return b;
+  const other = here.find(d => !isTaken(d.id)) || here[0] || DRAGONS[0];
+  return other.id;
 }
 // Уровень сложности игры: число побед + сложность из настроек
 function GL(key) { return (PS().games[key] || 0) + S.data.diff; }
@@ -60,7 +67,7 @@ function GW(key) {
     v.keys++;
     const star = v.villain === 'comet';
     if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast((star ? 'Найдена звезда! ' : 'Найден ключ! ') + v.keys + ' из 3', star ? 'star' : 'key'), 1600);
-  } else if (!v.taken.length) v.wins++;
+  } else if (!v.taken.length) { v.wins++; T().wins++; }
   if (typeof Care !== 'undefined') Care.played();
   stat('wins', 1); S.save();
 }

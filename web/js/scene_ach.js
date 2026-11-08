@@ -73,9 +73,9 @@ G.scenes.ach = {
     const a = this.hitCard(x, y);
     if (a) { Voice.say(a.title + '. ' + a.desc + '.'); Sound.pop(1); }
   },
-  layout(i) { const c = i % 5, r = Math.floor(i / 5); return { x: 160 + c * 240, y: 148 + r * 84 }; },
+  layout(i) { const c = i % 6, r = Math.floor(i / 6); return { x: 140 + c * 200, y: 146 + r * 82 }; },
   hitCard(x, y) {
-    for (let i = 0; i < ACH.length; i++) { const p = this.layout(i); if (Math.abs(x - p.x) < 115 && Math.abs(y - p.y) < 38) return ACH[i]; }
+    for (let i = 0; i < ACH.length; i++) { const p = this.layout(i); if (Math.abs(x - p.x) < 96 && Math.abs(y - p.y) < 38) return ACH[i]; }
     return null;
   },
   draw(ctx) {
@@ -83,7 +83,7 @@ G.scenes.ach = {
     World.calm(ctx, t, 0.6);
     if (this.gate) {
       UI.text(ctx, 'Стереть весь прогресс?', 640, 170, 40, '#fff', 'center', true);
-      UI.text(ctx, 'Вкусняшки, достижения и история с Шипуном начнутся заново. Отменить это нельзя.', 640, 235, 22, '#ffd6f0', 'center', false);
+      UI.text(ctx, 'Планеты, вкусняшки, достижения и все истории начнутся заново. Отменить это нельзя.', 640, 235, 22, '#ffd6f0', 'center', false);
       UI.text(ctx, 'Вопрос для взрослых: сколько будет ' + this.gate.a + ' + ' + this.gate.b + '?', 640, 330, 30, '#ffd23f', 'center', true);
       return;
     }
@@ -91,13 +91,13 @@ G.scenes.ach = {
       UI.text(ctx, 'Получено: ' + Ach.count() + ' из ' + ACH.length, 1170, 64, 19, '#ffd6f0', 'center', true);
       ACH.forEach((a, i) => {
         const p = this.layout(i), got = !!S.data.ach[a.id], k = Ach.progress(a);
-        Art.rr(ctx, p.x - 115, p.y - 37, 230, 74, 18); ctx.fillStyle = got ? 'rgba(255,248,230,0.97)' : 'rgba(60,40,110,0.8)'; ctx.fill();
+        Art.rr(ctx, p.x - 96, p.y - 36, 192, 72, 16); ctx.fillStyle = got ? 'rgba(255,248,230,0.97)' : 'rgba(60,40,110,0.8)'; ctx.fill();
         ctx.lineWidth = 4; ctx.strokeStyle = got ? '#ffd23f' : '#2a1650'; ctx.stroke();
-        Art.ell(ctx, p.x - 80, p.y, 27, 27, got ? '#ffd23f' : '#4a3a70'); Art.stroke(ctx, 3);
-        ctx.save(); if (!got) ctx.globalAlpha = 0.4; Art.icon(ctx, a.icon, p.x - 80, p.y, 0.56, t); ctx.restore();
-        UI.text(ctx, a.title, p.x + 30, p.y - 14, a.title.length > 14 ? 17 : 20, got ? '#5a3fa0' : '#d6c8ff', 'center', false);
-        if (!got && !a.ok) { UI.progress(ctx, p.x - 38, p.y + 6, 140, 22, k, '#ff7eb6'); }
-        else UI.text(ctx, got ? '★ получено' : 'ещё нет', p.x + 30, p.y + 18, 17, got ? '#ff7eb6' : '#a898d0', 'center', false);
+        Art.ell(ctx, p.x - 66, p.y, 23, 23, got ? '#ffd23f' : '#4a3a70'); Art.stroke(ctx, 3);
+        ctx.save(); if (!got) ctx.globalAlpha = 0.4; Art.icon(ctx, a.icon, p.x - 66, p.y, 0.48, t); ctx.restore();
+        UI.text(ctx, a.title, p.x + 22, p.y - 13, a.title.length > 16 ? 13 : a.title.length > 12 ? 15 : 17, got ? '#5a3fa0' : '#d6c8ff', 'center', false);
+        if (!got && !a.ok) { UI.progress(ctx, p.x - 36, p.y + 6, 118, 20, k, '#ff7eb6'); }
+        else UI.text(ctx, got ? '★ получено' : 'ещё нет', p.x + 22, p.y + 18, 15, got ? '#ff7eb6' : '#a898d0', 'center', false);
       });
     } else {
       UI.text(ctx, 'Сложность игр', 640, 170, 30, '#fff', 'center', true);

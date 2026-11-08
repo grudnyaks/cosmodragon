@@ -12,7 +12,6 @@
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     // хвост — несколько светящихся лент позади
     ctx.save(); ctx.rotate(dir + Math.PI);
-    ctx.globalCompositeOperation = 'lighter';
     const bands = [['#ff7eb6', 46, 0.5], ['#ffb23a', 36, 0.65], ['#fff3a0', 22, 0.8], ['#ffffff', 10, 0.9]];
     for (const [c, w, a] of bands) {
       for (const side of [-1, 1]) {
@@ -77,7 +76,7 @@
   };
 
   // Звёздное небо (для сцен с кометой)
-  Art.sky = function (ctx, t, o) {
+  Art.starSky = function (ctx, t, o) {
     o = o || {};
     const v = G.view;
     const g = ctx.createLinearGradient(0, v.y0, 0, v.y1);
@@ -119,7 +118,7 @@
   };
 
   // Сундук с сокровищами Шипуна
-  Art.chest = function (ctx, x, y, s, t, open) {
+  Art.lairChest = function (ctx, x, y, s, t, open) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     ctx.save(); ctx.globalAlpha = 0.35; ell(ctx, 0, 6, 110, 18, '#000'); ctx.restore();
     Art.rr(ctx, -95, -80, 190, 86, 12); ctx.fillStyle = '#9a5a2a'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#3a1a0a'; ctx.stroke();
@@ -138,7 +137,7 @@
   };
 
   // Гриб-прыгун
-  Art.mushroom = function (ctx, x, y, s, c, squash) {
+  Art.bouncyShroom = function (ctx, x, y, s, c, squash) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s * (1 + (squash || 0) * 0.25), s * (1 - (squash || 0) * 0.3));
     Art.rr(ctx, -14, -50, 28, 52, 10); ctx.fillStyle = '#f8ecd8'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = L; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(-56, -42); ctx.bezierCurveTo(-56, -110, 56, -110, 56, -42); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); ctx.stroke();
@@ -176,7 +175,7 @@
       ctx.beginPath(); ctx.moveTo(1, -1); ctx.quadraticCurveTo(9, 6, 16, -2); ctx.lineWidth = 2.5; ctx.stroke();
       ctx.restore(); return;
     }
-    if (name === 'chest') { Art.chest(ctx, x, y + 14 * s, s * 0.28, t || 0, 0); return; }
+    if (name === 'chest') { Art.lairChest(ctx, x, y + 14 * s, s * 0.28, t || 0, 0); return; }
     if (name === 'cave') {
       ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
       ctx.beginPath(); ctx.moveTo(-30, 22); ctx.bezierCurveTo(-30, -20, -14, -30, 0, -30); ctx.bezierCurveTo(14, -30, 30, -20, 30, 22); ctx.closePath(); ctx.fillStyle = '#7a6a98'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = L; ctx.stroke();

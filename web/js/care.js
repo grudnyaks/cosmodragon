@@ -45,7 +45,11 @@ const Care = {
   custom(id) { const p = this.pet(id); return !!(p && p.name && p.name !== DRAGON_BY_ID[id].name); },
   // винительный падеж: для своих имён — «дракончика Тучка»
   acc(id) { return this.custom(id) ? 'дракончика ' + this.name(id) : DRAGON_BY_ID[id].acc; },
-  both() { return (this.custom('dark') || this.custom('light')) ? 'обоих дракончиков' : 'Дракошу и Пушка'; },
+  both(ids) {
+    ids = ids || ['dark', 'light'];
+    if (ids.length < 2) return this.acc(ids[0]);
+    return ids.some(id => this.custom(id)) ? 'обоих дракончиков' : DRAGON_BY_ID[ids[0]].acc + ' и ' + DRAGON_BY_ID[ids[1]].acc;
+  },
   // подставляем свои имена в готовые фразы (там имена в именительном падеже)
   fill(text) {
     let s = text;

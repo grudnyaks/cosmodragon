@@ -33,7 +33,7 @@ G.scenes.sleep = {
   enter(args) {
     args = args || {};
     this.mode = args.mode || 'nap';
-    this.ids = this.mode === 'bedtime' ? DRAGONS.map(d => d.id).filter(id => !isTaken(id)) : [args.id || buddy()];
+    this.ids = this.mode === 'bedtime' ? PD().map(d => d.id).filter(id => !isTaken(id)) : [args.id || buddy()];
     if (!this.ids.length) this.ids = [buddy()];
     UI.homeButton(this);
     this.step = 'blanket'; this.k = 0; this.lampOn = true; this.st = 0; this.sleepT = 0;
@@ -129,7 +129,7 @@ G.scenes.sleeping = {
     const t = G.t;
     nightRoom(ctx, t);
     Art.bed(ctx, 640, 600, 1, 0);
-    const ids = DRAGONS.map(d => d.id).filter(id => !isTaken(id));
+    const ids = PD().map(d => d.id).filter(id => !isTaken(id));
     ids.forEach((id, i) => { const x = ids.length > 1 ? 560 + i * 170 : 640; Art.dragon(ctx, x, 600, 0.62, { kind: id, t: t + i, sleep: !this.woke, happy: this.woke, tilt: this.woke ? 0 : (i ? -0.15 : 0.15) }); if (!this.woke) zzz(ctx, x + 50, 380, t + i * 0.7); });
     Art.blanket(ctx, 640, 620, 1.05, this.woke ? 0.3 : 1);
     if (!this.woke) { ctx.save(); ctx.fillStyle = 'rgba(5,5,30,0.45)'; ctx.fillRect(G.view.x0, G.view.y0, G.view.x1 - G.view.x0, G.view.y1 - G.view.y0); ctx.restore(); }
