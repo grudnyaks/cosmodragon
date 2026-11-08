@@ -42,6 +42,8 @@ const G = {
     G.pointer = { x: p.x, y: p.y, down: true, id: e.pointerId, sx: p.x, sy: p.y, st: G.t };
     if (G.fadeDir !== 0) return;
     const s = G.scene; if (!s) return;
+    // гость поверх сцены (Шипун выглядывает в мини-играх) перехватывает нажатие
+    if (G.overlay && G.overlay.down && G.overlay.down(p.x, p.y)) { G.pointer.eaten = true; return; }
     // кнопки сцены
     if (s.buttons) {
       for (let i = s.buttons.length - 1; i >= 0; i--) {
@@ -57,7 +59,7 @@ const G = {
     if (!G.pointer.down || e.pointerId !== G.pointer.id) return;
     const p = toV(e);
     G.pointer.x = p.x; G.pointer.y = p.y;
-    if (G.pointer.btn) return;
+    if (G.pointer.btn || G.pointer.eaten) return;
     G.scene && G.scene.move && G.scene.move(p.x, p.y);
   });
   function up(e) {
@@ -65,7 +67,9 @@ const G = {
     if (!G.pointer.down || e.pointerId !== G.pointer.id) return;
     const p = toV(e);
     const b = G.pointer.btn;
-    G.pointer.down = false; G.pointer.btn = null;
+    const eaten = G.pointer.eaten;
+    G.pointer.down = false; G.pointer.btn = null; G.pointer.eaten = false;
+    if (eaten) return;
     if (b) {
       if (UI.hit(b, p.x, p.y, 30)) { Sound.pop(1.2); b.onTap && b.onTap(); }
       return;
@@ -87,6 +91,7 @@ const G = {
     G.scene = G.scenes[name]; G.sceneName = name;
     G.scene.buttons = [];
     G.scene.enter && G.scene.enter(args || {});
+    if (G.overlay && G.overlay.enter) G.overlay.enter(name);
   }
   G.start = function (name, args) { enter(name, args); G.fade = 1; G.fadeDir = -1; };
 
@@ -171,6 +176,8 @@ const G = {
 
   let last = performance.now();
   function frame(now) {
+    // следующий кадр заказываем сразу: даже если в рисовании случится ошибка, игра не зависнет
+    requestAnimationFrame(frame);
     let dt = (now - last) / 1000; last = now;
     if (dt > 0.05) dt = 0.05;
     G.dt = dt; G.t += dt;
@@ -198,6 +205,7 @@ const G = {
       s.draw && s.draw(ctx);
       if (s.buttons) for (const b of s.buttons) if (!b.hidden) UI.drawButton(ctx, b);
       s.drawTop && s.drawTop(ctx);
+      if (G.overlay && G.overlay.frame) G.overlay.frame(ctx, dt);
     }
     drawParticles(ctx, dt);
     drawToasts(ctx, dt);
@@ -205,7 +213,6 @@ const G = {
       ctx.fillStyle = 'rgba(27,18,64,' + G.fade + ')';
       const v = G.view; ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     }
-    requestAnimationFrame(frame);
   }
   G.run = function () { requestAnimationFrame(t => { last = t; frame(t); }); };
 

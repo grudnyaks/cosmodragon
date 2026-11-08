@@ -20,7 +20,7 @@ G.scenes.home = {
     this.as = { anim: 'idle', at: 0, until: 0, phrase: 0 };
     this.rk = { lift: 0, flame: 0, busy: false, act: 0, pilotWave: 0, lights: 0 };
     this.cave = { peek: 0, eyes: 1, talk: 0 };
-    this.sp = null; this.busy = false; this.feedTurn = 0;
+    this.sp = null; this.cm = null; this.busy = false; this.feedTurn = 0;
     // 12 игр в нижнем ряду
     const games = P().games.concat([{ scene: 'duo', icon: 'duo', color: '#ff9a3c' }]), n = games.length, step = 91, r = 39;
     const x0 = 640 - (n - 1) * step / 2;
@@ -47,7 +47,7 @@ G.scenes.home = {
       onTap: () => { Voice.stop(); G.go('sleep', { mode: 'bedtime' }); } });
     this.updBtn = UI.add(this, { x: tx(6), y: 56, r: 33, icon: 'update', color: '#41d982', pulse: true, hidden: !G.updateReady, onTap: () => { if (window.Android && Android.reload) Android.reload(); else location.reload(); } });
     this.rescueBtn = UI.add(this, { x: 640, y: 180, w: 470, h: 84, label: 'Спасти дракончиков!', icon: 'sword', iconX: -185, fontSize: 32, color: '#ff3b5c', pulse: true, hidden: true,
-      onTap: () => { Voice.stop(); G.go('rescue'); } });
+      onTap: () => { Voice.stop(); G.go(V().villain === 'comet' ? 'comet' : 'rescue'); } });
     // Шипун приходит, когда набралось достаточно побед
     if (Villain.due()) setTimeout(() => this.kidnap(), 1600);
     else setTimeout(() => this.hello(), 700);
@@ -56,7 +56,7 @@ G.scenes.home = {
   hello() {
     if (G.scene !== this || this.busy) return;
     const v = V();
-    if (v.taken.length) { Voice.say(v.keys >= 3 ? 'Все ключи найдены! Нажми на красную кнопку, чтобы спасти дракончиков!' : 'Шипун держит дракончиков в Тёмной пещере! ' + Villain.task(v.taken)); return; }
+    if (v.taken.length) { Voice.say(v.keys >= 3 ? (v.villain === 'comet' ? 'Все звёзды собраны! Нажми на красную кнопку и поймай комету!' : 'Все ключи найдены! Нажми на красную кнопку, чтобы спасти дракончиков!') : Villain.where() + ' ' + Villain.task(v.taken)); return; }
     if (Care.late()) { this.askBed(); return; }
     for (const D of DRAGONS) { const n = Care.lowest(D.id, 35); if (n) { Voice.say(Care.ask(D.id, n.id)); this.pulseNeed(D.id, n.id); Care.data().lastCall = Date.now(); return; } }
     Voice.say('Привет! Дракончики рады тебя видеть!');
@@ -73,12 +73,13 @@ G.scenes.home = {
     if (Math.abs(x - 170) < 85 && y > 120 - this.rk.lift && y < 600 - this.rk.lift) return this.tapRocket();
   },
   // ---------- пещера Шипуна ----------
+  // нажатие на пещеру — заходим внутрь
   tapCave() {
     const c = this.cave;
-    Sound.hiss(); c.peek = 0.01; c.talk = 2.2;
-    G.tween(c, { peek: 1 }, 0.5, G.ease.outBack, () => G.tween(c, { peek: 0 }, 0.6, G.ease.inOutQuad, null, 1.6));
-    Voice.say(Villain.taunt());
-    stat('cave');
+    Sound.hiss(); c.peek = 0.01; c.talk = 1;
+    G.tween(c, { peek: 1 }, 0.4, G.ease.outBack);
+    this.busy = true;
+    G.wait(0.7, () => { this.busy = false; Voice.stop(); G.go('lair'); });
   },
   // ---------- космонавт ----------
   tapAstro() {
@@ -131,7 +132,7 @@ G.scenes.home = {
   feed() {
     if (this.busy) return;
     const here = this.present();
-    if (!here.length) { Voice.say('Шипун держит дракончиков в Тёмной пещере! ' + Villain.task(V().taken)); return; }
+    if (!here.length) { Voice.say(Villain.where() + ' ' + Villain.task(V().taken)); return; }
     const ps = PS();
     if (ps.treats <= 0) {
       Voice.say('Угощение закончилось! Поиграй в игры, чтобы найти ещё.');
@@ -174,8 +175,9 @@ G.scenes.home = {
   kidnap() {
     if (G.scene !== this || this.busy || !Villain.due()) return;
     const plan = Villain.plan();
-    plan.line = Villain.sayLine(Villain.chapter());
+    plan.line = Villain.sayLine(Villain.chapter(), plan.villain);
     this.busy = true;
+    if (plan.villain === 'comet') return this.cometKidnap(plan);
     const sp = this.sp = { head: CAVE_X + 60, y: 560, carry: [] };
     Sound.hiss(); Voice.say('Ой! Кто это шипит в пещере?');
     const grab = (i) => {
@@ -190,6 +192,32 @@ G.scenes.home = {
             this.sp = null; this.busy = false;
             G.go('villain', { kind: 'kidnap' });
           }, 2.2);
+        }
+      }, i ? 0.3 : 1.4);
+    };
+    grab(0);
+  },
+  // Шкода пикирует с неба, сажает дракончиков в пузырь и улетает
+  cometKidnap(plan) {
+    const cm = this.cm = { x: G.view.x1 + 200, y: -100, dir: Math.PI * 0.8, carry: [] };
+    Sound.whoosh(); Voice.say('Ой! Что это летит по небу?');
+    const grab = (i) => {
+      const id = plan.ids[i], d = this.drs[id];
+      cm.dir = Math.atan2(d.y - 260 - cm.y, d.x - cm.x);
+      G.tween(cm, { x: d.x + 40, y: d.y - 300 }, 1.6, G.ease.inOutQuad, () => {
+        Sound.magic(); d.carried = true; cm.carry.push(id);
+        G.burst(d.x, d.y - 100, { kind: 'star', n: 16, speed: 240 });
+        if (i + 1 < plan.ids.length) grab(i + 1);
+        else {
+          Voice.say(plan.line);
+          G.wait(4, () => {
+            cm.dir = Math.atan2(-400, -900); Sound.whoosh();
+            G.tween(cm, { x: G.view.x0 - 400, y: -250 }, 2, x => x * x, () => {
+              Villain.start(plan);
+              this.cm = null; this.busy = false;
+              G.go('villain', { kind: 'kidnap' });
+            });
+          });
         }
       }, i ? 0.3 : 1.4);
     };
@@ -255,7 +283,13 @@ G.scenes.home = {
       Art.serpent(ctx, pts, t, { open: !this.sp.carry.length, r: 34 });
       this.sp.carry.forEach((id, i) => Art.dragon(ctx, this.sp.head + 50 + i * 70, this.sp.y - 60 - i * 10, 0.42, { kind: id, t, tilt: 0.5, look: -1, mouth: 0.8 }));
     }
-    if (v.taken.length && !this.sp) this.drawKeys(ctx, t);
+    if (this.cm) {
+      const cm = this.cm, n = cm.carry.length;
+      cm.carry.forEach((id, i) => Art.dragon(ctx, cm.x - 150 + (n > 1 ? (i ? 36 : -36) : 0), cm.y + 175, 0.3, { kind: id, t: t + i, flying: true, mouth: 0.6 }));
+      if (n) Art.bubble(ctx, cm.x - 150, cm.y + 125, n > 1 ? 100 : 78, t);
+      Art.comet(ctx, cm.x, cm.y, 0.8, t, { dir: cm.dir, talk: !!Voice.cur });
+    }
+    if (v.taken.length && !this.sp && !this.cm) this.drawKeys(ctx, t);
   },
   thought(ctx, x, y, N, t, dir) {
     const b = Math.sin(t * 3) * 4;
@@ -266,12 +300,12 @@ G.scenes.home = {
     ctx.restore();
   },
   drawKeys(ctx, t) {
-    const v = V(), cx = 820;
+    const v = V(), cx = 820, star = v.villain === 'comet';
     Art.rr(ctx, cx - 210, 16, 420, 110, 30); ctx.fillStyle = 'rgba(30,14,70,0.7)'; ctx.fill();
-    UI.text(ctx, 'Ключи от пещеры Шипуна', cx, 44, 26, '#ffd6f0', 'center', true);
+    UI.text(ctx, star ? 'Звёзды, чтобы поймать Шкоду' : 'Ключи от пещеры Шипуна', cx, 44, 26, '#ffd6f0', 'center', true);
     for (let i = 0; i < 3; i++) {
       Art.ell(ctx, cx - 90 + i * 90, 92, 26, 26, i < v.keys ? '#ffd23f' : 'rgba(255,255,255,0.15)');
-      ctx.save(); if (i >= v.keys) ctx.globalAlpha = 0.35; Art.icon(ctx, 'key', cx - 90 + i * 90, 92, 0.6, t); ctx.restore();
+      ctx.save(); if (i >= v.keys) ctx.globalAlpha = 0.35; Art.icon(ctx, star ? 'star' : 'key', cx - 90 + i * 90, 92, 0.6, t); ctx.restore();
     }
   },
   drawTop(ctx) {

@@ -4,7 +4,7 @@ const KEY = 'cosmodragon.save.v1';
 const S = {
   data: null,
   planetDefaults() { return { treats: 5, games: {}, visited: false }; },
-  villainDefaults() { return { taken: [], keys: 0, ch: 0, wins: 0, next: 3, rescues: 0, friend: false, seen: [] }; },
+  villainDefaults() { return { taken: [], keys: 0, ch: 0, wins: 0, next: 3, rescues: 0, friend: false, friend2: false, villain: 'snake', hides: null, seen: [] }; },
   defaults() {
     return {
       v: 3, planet: 'nyam', planets: {}, buddy: 'dark', villain: this.villainDefaults(),
@@ -20,6 +20,7 @@ const S = {
     this.data.planet = 'nyam';
     this.data.planets.nyam = Object.assign(this.planetDefaults(), this.data.planets.nyam || {});
     this.data.villain = Object.assign(this.villainDefaults(), this.data.villain || {});
+    { const v = this.data.villain; if (v.hides == null) v.hides = Math.max(0, v.rescues - (v.friend ? 7 : v.rescues)); }
     if (!DRAGON_BY_ID[this.data.buddy]) this.data.buddy = 'dark';
   },
   // Старые сохранения (с планетами и ростом): переносим вкусняшки, настройки и статистику, сюжет начинается заново
@@ -57,7 +58,8 @@ function GW(key) {
   // пока дракончики у Змея, каждая победа приносит ключ
   if (v.taken.length && v.keys < 3) {
     v.keys++;
-    if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast('Найден ключ! ' + v.keys + ' из 3', 'key'), 1600);
+    const star = v.villain === 'comet';
+    if (typeof G !== 'undefined' && G.toast) setTimeout(() => G.toast((star ? 'Найдена звезда! ' : 'Найден ключ! ') + v.keys + ' из 3', star ? 'star' : 'key'), 1600);
   } else if (!v.taken.length) v.wins++;
   if (typeof Care !== 'undefined') Care.played();
   stat('wins', 1); S.save();
