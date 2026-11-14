@@ -100,13 +100,13 @@ G.scenes.map = {
     }
     // ракета (и хвост Шипуна, который заполз внутрь)
     const sh = this.ship, tr = this.travel;
-    if (tr && tr.snake) {
+    if (tr && tr.snake && !Egg.hatched()) {
       ctx.save(); ctx.translate(sh.x, sh.y + 40); ctx.rotate(sh.rot);
       const w = Math.sin(t * 8) * 6;
       ctx.beginPath(); ctx.moveTo(-6, 14); ctx.quadraticCurveTo(-26 + w, 34, -14 - w, 52); ctx.lineWidth = 9; ctx.strokeStyle = '#5b3a8c'; ctx.stroke(); ctx.lineWidth = 3; ctx.strokeStyle = '#d8e88a'; ctx.stroke();
       ctx.restore();
     }
-    Art.rocket(ctx, sh.x, sh.y + 40, 0.15, { t, flame: tr ? 1 : 0.3, rot: tr ? sh.rot : 0, pilot: true });
+    Egg.ride(ctx, sh.x, sh.y + 40, 0.15, t, { flame: tr ? 1 : 0.3, rot: tr ? sh.rot : 0, pilot: true });
   },
 };
 
@@ -120,8 +120,9 @@ G.scenes.arrive = {
     this.ds = dragonsOf(pd.id).map((d, i) => ({ id: d.id, x: 1500 + i * 200, y: 600, tx: 700 + i * 190, lift: 200, happy: 0 }));
     this.sn = { k: 0, on: false };
     const v = V();
-    const snakeLine = v.friend ? 'Смотри! Из ракеты выполз Шипун. Он полетел с нами в гости и поселился в пещере.' : 'Ой! Кто это выполз из ракеты и юркнул в пещеру? Похоже, Шипун тайком полетел с нами!';
-    this.slides = (pd.intro || []).concat([snakeLine]);
+    const snakeLine = Egg.hatched() ? 'Шипун прилетел с нами, удобно устроившись на спине у Космика, и сразу уполз в пещеру.' : v.friend ? 'Смотри! Из ракеты выполз Шипун. Он полетел с нами в гости и поселился в пещере.' : 'Ой! Кто это выполз из ракеты и юркнул в пещеру? Похоже, Шипун тайком полетел с нами!';
+    const eggLine = Egg.snake();
+    this.slides = (pd.intro || []).map(x => Egg.text(x)).concat([snakeLine + (eggLine ? ' ' + eggLine : '')]);
     this.i = -1;
     UI.add(this, { x: G.view.x1 - 80, y: G.view.y1 - 80, r: 50, icon: 'next', color: '#38d6c3', pulse: true, onTap: () => this.next() });
     Sound.rumble(2); Sound.whoosh();
@@ -150,7 +151,7 @@ G.scenes.arrive = {
     const t = G.t;
     World.bg(ctx, t, { planet: this.pd.id, bright: true });
     Art.lair(ctx, CAVE_X, 612, 1, t, { eyes: this.sn.k >= 1, friend: V().friend });
-    Art.rocket(ctx, 170, this.rk.y, 0.8, { t, flame: this.rk.flame });
+    Egg.ride(ctx, 170, this.rk.y, 0.8, t, { flame: this.rk.flame, rider: this.rk.flame > 0 });
     if (this.as.show > 0) { ctx.save(); ctx.globalAlpha = this.as.show; Art.astronaut(ctx, 300 + this.as.show * 60, 600, 1.1, { t, anim: this.i >= 0 ? 'wave' : 'idle', at: t }); ctx.restore(); }
     for (const d of this.ds) Art.dragon(ctx, d.x, d.y, 0.68, { kind: d.id, t: t + d.tx, lift: d.lift, flying: d.lift > 5, happy: d.happy > 0, look: -1 });
     // Шипун ползёт от ракеты к пещере

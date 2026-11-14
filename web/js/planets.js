@@ -168,6 +168,10 @@ const DRAGONS = [
   { id: 'tenek', planet: 'night', name: 'Тенёк', acc: 'Тенька', gen: 'Тенька', dat: 'Теньку', voice: 'jungle',
     body: '#2a2a6a', hi: '#5a5aa8', shade: '#10102e', belly: '#c8c8f0', bellyHi: '#ffffff', spot: '#fff3a0', horn: '#fff3a0', hornShade: '#c8b860',
     wing: '#1a1a4a', wingMem: '#4a4a9a', iris: ['#fffbe0', '#ffd23f', '#8a6a0a'], claw: '#fff3a0', tip: 'moon', marks: 'stars' },
+  // звёздный дракон, который вылупится из ракеты, когда загорятся все 12 маяков
+  { id: 'kosmik', planet: 'sky', name: 'Космик', acc: 'Космика', gen: 'Космика', dat: 'Космику', voice: 'wind',
+    body: '#4a3ac8', hi: '#9a8af8', shade: '#1e1460', belly: '#fff0c0', bellyHi: '#ffffff', spot: '#fff3a0', horn: '#ffd23f', hornShade: '#c8901a',
+    wing: '#2a1e8a', wingMem: '#c89aff', iris: ['#ffffff', '#7ee8ff', '#1a4ab8'], claw: '#ffd23f', tip: 'star', marks: 'stars', extra: 'shellcap' },
 ];
 const DRAGON_BY_ID = {};
 DRAGONS.forEach(d => { DRAGON_BY_ID[d.id] = d; });

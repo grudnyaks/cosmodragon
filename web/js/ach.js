@@ -39,6 +39,8 @@ const ACH = (function () {
     { id: 'beacon12', title: 'Свет галактики', desc: 'Зажги все 12 маяков', icon: 'galaxy', goal: 12, val: () => PLANETS.filter(p => S.data.planets[p.id].beacon).length },
     { id: 'travel', title: 'Путешественник', desc: 'Побывай на всех планетах', icon: 'galaxy', goal: 12, val: () => PLANETS.filter(p => S.data.planets[p.id].visited).length },
     { id: 'thief1', title: 'Догонялки', desc: 'Догони воришку в чёрном шлеме', icon: 'star', ok: () => st('thiefCaught') >= 1 },
+    { id: 'egg5', title: 'Тук-тук', desc: 'Послушай ракету 5 раз', icon: 'galaxy', goal: 5, val: () => st('eggTaps') },
+    { id: 'kosmik', title: 'Звёздный дракон', desc: 'Узнай, что пряталось в ракете', icon: 'star', ok: () => Egg.hatched() },
     { id: 'tenek', title: 'Тайна чёрного шлема', desc: 'Узнай, кто прятался под шлемом', icon: 'moon', ok: () => T().friend },
   ];
   // победы в игре на всех планетах вместе

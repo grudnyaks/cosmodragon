@@ -277,6 +277,10 @@
       ctx.globalAlpha = 0.5 * k; ctx.fillStyle = Art.rg(ctx, 16, 0, 34, D.spot, rgba(D.spot, 0), 0, 0); ell(ctx, 16, 0, 34, 34); ctx.fill();
       ctx.globalAlpha = 1; vol(ctx, E(ctx, 16, 0, 12, 12), 16, 0, 12, '#ffffff', D.spot, mix(D.spot, '#000000', 0.3), 1.5);
     },
+    star(ctx, D, t) {
+      ctx.globalAlpha = 0.45 + Math.sin(t * 3) * 0.15; ctx.fillStyle = Art.rg(ctx, 20, 0, 34, D.spot, rgba(D.spot, 0), 0, 0); ell(ctx, 20, 0, 34, 34); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.save(); ctx.translate(20, 0); ctx.rotate(t * 0.8); Art.roundStar(ctx, 0, 0, 17, D.spot, '#a8701a'); ctx.restore();
+    },
     moon(ctx, D, t) {
       ctx.globalAlpha = 0.4 + Math.sin(t * 2) * 0.15; ctx.fillStyle = Art.rg(ctx, 18, 0, 30, D.spot, rgba(D.spot, 0), 0, 0); ell(ctx, 18, 0, 30, 30); ctx.fill(); ctx.globalAlpha = 1;
       ctx.beginPath(); ctx.arc(18, 0, 14, 0, TAU); ctx.arc(24, -4, 11, 0, TAU, true); ctx.fillStyle = D.spot; ctx.fill('evenodd');
@@ -291,6 +295,13 @@
     sprout: { front(ctx, D, t) { ctx.beginPath(); ctx.moveTo(0, -48); ctx.quadraticCurveTo(4, -64, 0, -76); ctx.lineWidth = 4; ctx.strokeStyle = '#2a8a3a'; ctx.stroke(); for (const side of [-1, 1]) { ctx.save(); ctx.translate(0, -74); ctx.rotate(side * (0.9 + Math.sin(t * 2) * 0.1)); ell(ctx, 0, -12, 7, 13, '#7ae06a'); ctx.restore(); } } },
     antennae: { noHorns: true, front(ctx, D, t) { for (const side of [-1, 1]) { const w = Math.sin(t * 3 + side) * 4; ctx.beginPath(); ctx.moveTo(side * 16, -44); ctx.quadraticCurveTo(side * 28, -84, side * 44 + w, -96); ctx.lineWidth = 4; ctx.strokeStyle = '#3a2a1a'; ctx.stroke(); vol(ctx, E(ctx, side * 44 + w, -98, 9, 9), side * 44, -98, 9, '#ffe9a0', '#ffc83a', '#a8701a', 1.5); } } },
     antenna: { front(ctx, D, t) { ctx.beginPath(); ctx.moveTo(0, -48); ctx.lineTo(0, -86); ctx.lineWidth = 5; ctx.strokeStyle = '#5a6a80'; ctx.stroke(); const on = Math.sin(t * 5) > 0; if (on) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = Art.rg(ctx, 0, -92, 22, '#ff5a6a', 'rgba(255,90,106,0)', 0, 0); ell(ctx, 0, -92, 22, 22); ctx.fill(); ctx.restore(); } ell(ctx, 0, -92, 9, 9, on ? '#ff5a6a' : '#a83a4a'); ctx.lineWidth = 2; ctx.strokeStyle = '#3a2a3a'; ctx.stroke(); } },
+    // скорлупка от яйца на макушке (у Космика)
+    shellcap: { front(ctx) {
+      ctx.beginPath(); ctx.moveTo(-50, -40); ctx.lineTo(-38, -62); ctx.lineTo(-24, -48); ctx.lineTo(-10, -70); ctx.lineTo(6, -50); ctx.lineTo(20, -72); ctx.lineTo(34, -52); ctx.lineTo(50, -64); ctx.lineTo(56, -40);
+      ctx.bezierCurveTo(50, -100, -46, -104, -50, -40); ctx.closePath();
+      const g = ctx.createLinearGradient(0, -100, 0, -40); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d8dcea'); ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#6a6e8a'; ctx.stroke();
+      ctx.fillStyle = '#ff7a1a'; ctx.fillRect(-30, -88, 60, 7); Art.roundStar(ctx, 0, -96, 7, '#ff7a1a', '#6a6e8a');
+    } },
     cap: { noHorns: true, front(ctx, D) { vol(ctx, () => { ctx.beginPath(); ctx.moveTo(-74, -24); ctx.bezierCurveTo(-70, -100, 70, -100, 74, -24); ctx.quadraticCurveTo(0, -36, -74, -24); ctx.closePath(); }, 0, -60, 70, '#ff9ad5', '#d0408a', '#7a1a5a', 2); for (const [x, y, r] of [[-38, -52, 9], [0, -72, 11], [36, -50, 8], [-14, -44, 5], [56, -36, 5]]) { ctx.save(); ctx.globalAlpha = 0.9; ell(ctx, x, y, r, r * 0.8, '#fff6fb'); ctx.restore(); } } },
   };
 

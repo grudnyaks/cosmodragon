@@ -43,6 +43,7 @@ G.scenes.lair = {
     let pool = v.friend ? LAIR_SAY.friend.slice() : LAIR_SAY.grumpy;
     if (v.friend && !v.friend2 && Villain.chapter() != null) pool = pool.concat(LAIR_SAY.sky);
     if (v.friend2) pool = pool.concat(LAIR_SAY.friend2);
+    if (Egg.snake() && Math.random() < 0.5) { this.say(Egg.snake()); return; }
     if (v.taken.length) { this.greet(); return; }
     this.lineI = (this.lineI + 1 + M.ri(0, pool.length - 2)) % pool.length;
     this.say(pool[this.lineI]);

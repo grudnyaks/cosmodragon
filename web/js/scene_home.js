@@ -58,7 +58,8 @@ G.scenes.home = {
     this.flyBtn = UI.add(this, { x: 640, y: 180, w: 500, h: 84, label: nx ? 'Лететь: ' + nx.name : '', icon: 'galaxy', iconX: -190, fontSize: 30, color: '#8f6cf2', pulse: true, hidden: true,
       onTap: () => { Voice.stop(); G.go('map', { reveal: nx && nx.id }); } });
     // злодеи: Шипун (или Шкода) — по победам; воришка — на дальних планетах
-    if (Villain.due() && this.here.length) setTimeout(() => this.kidnap(), 1600);
+    if (Egg.due()) setTimeout(() => { if (G.scene === this && !this.busy) G.go('hatch'); }, 1200);
+    else if (Villain.due() && this.here.length) setTimeout(() => this.kidnap(), 1600);
     else if (typeof Thief !== 'undefined' && Thief.due()) setTimeout(() => Thief.appear(this), 1600);
     else setTimeout(() => this.hello(), 700);
   },
@@ -118,6 +119,25 @@ G.scenes.home = {
     G.tween(this.bc, { light: 1 }, 2, G.ease.inOutQuad, () => { this.busy = false; });
     for (let i = 0; i < 8; i++) setTimeout(() => { G.burst(M.rnd(200, 1100), M.rnd(80, 350), { kind: 'star', n: 26, speed: 340, g: 120 }); Sound.chime(M.rnd(0.8, 1.4)); }, i * 350);
     Voice.say(P().beaconText);
+    // ракета откликается на свет маяка
+    if (!Egg.hatched() && Egg.stage() < 12) G.wait(6.5, () => { if (G.scene !== this) return; this.rk.shake = 1; Sound.bump(); setTimeout(() => Sound.bump(), 260); G.tween(this.rk, { shake: 0 }, 1.5, G.ease.outQuad); Voice.say('Ой! Ракета вздрогнула, когда загорелся маяк! ' + (Egg.hint() || '')); });
+    if (Egg.due()) G.wait(7, () => { if (G.scene === this) G.go('hatch'); });
+  },
+  // Космик: катает, урчит, чихает звёздами
+  tapKosmik() {
+    const rk = this.rk; rk.busy = true; rk.act = (rk.act + 1) % 3;
+    if (rk.act === 1) {
+      Sound.whoosh(); Voice.say(M.pick(['Ура, полетели! Ж-ж-жух!', 'Держись крепче! Летим!']));
+      G.tween(rk, { lift: 260 }, 1.2, G.ease.inOutQuad, () => G.tween(rk, { lift: 0 }, 1.2, G.ease.inOutQuad, () => { rk.busy = false; Sound.bump(); }));
+    } else if (rk.act === 2) {
+      rk.flame = 1; Sound.fire(); Voice.say('Смотри, я умею пускать звёздный огонь!');
+      G.burst(300, 430, { kind: 'star', n: 24, speed: 320 });
+      G.wait(1.4, () => { rk.flame = 0; rk.busy = false; });
+    } else {
+      rk.pilotWave = 2; Sound.purr(1.6, { dragon: 'kosmik' }); Voice.say(M.pick(['Мур-р-р! Я Космик! Я вылупился из ракеты!', 'Апчхи! Ой, я чихнул звёздочками!', 'Мне нравится возить тебя по галактике!']));
+      G.burst(170, 380, { kind: 'star', n: 14, up: true, g: -60, speed: 200 });
+      G.wait(1.4, () => { rk.busy = false; });
+    }
   },
   // ---------- космонавт ----------
   tapAstro() {
@@ -132,6 +152,14 @@ G.scenes.home = {
   // ---------- ракета ----------
   tapRocket() {
     const rk = this.rk; if (rk.busy) return;
+    if (Egg.hatched()) return this.tapKosmik();
+    // ракета-яйцо: подсказки
+    if (Egg.stage() >= 1 && Math.random() < 0.6) {
+      rk.busy = true; rk.shake = 1; Sound.bump(); setTimeout(() => Sound.bump(), 260);
+      G.tween(rk, { shake: 0 }, 1.2, G.ease.outQuad, () => { rk.busy = false; });
+      Voice.say(Egg.hint()); stat('eggTaps');
+      return;
+    }
     rk.busy = true; rk.act = (rk.act + 1) % 3;
     if (rk.act === 1) {
       Voice.say('Три! Два! Один! Пуск!'); stat('launch');
@@ -306,7 +334,11 @@ G.scenes.home = {
     this.drawBeacon(ctx, t);
     Art.lair(ctx, CAVE_X, 612, 1, t, { peek: this.cave.peek, talk: this.cave.talk > 0, friend: v.friend, eyes: !this.sp });
     const rk = this.rk;
-    Art.rocket(ctx, 170, World.GROUND + 25 - rk.lift, 0.8, { t, flame: rk.flame, glowBase: rk.lift < 5, pilot: rk.pilotWave > 0, pilotWave: rk.pilotWave > 0 });
+    if (Egg.hatched()) {
+      // вместо ракеты — звёздный дракон Космик и скорлупки рядом
+      for (const [sx, r] of [[70, 0.4], [250, -0.6], [110, 2.4]]) { ctx.save(); ctx.translate(sx, World.GROUND + 18); ctx.rotate(r); ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(-8, -16); ctx.lineTo(10, -10); ctx.lineTo(22, 6); ctx.lineTo(0, 10); ctx.closePath(); ctx.fillStyle = '#eef0f8'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#6a6e8a'; ctx.stroke(); ctx.restore(); }
+      Art.dragon(ctx, 160, World.GROUND + 20 - rk.lift, 0.7, { kind: 'kosmik', t, flying: rk.lift > 5, lift: 0, happy: rk.pilotWave > 0, fire: rk.flame > 0.9 && rk.act === 2, look: 1 });
+    } else Art.rocket(ctx, 170, World.GROUND + 25 - rk.lift, 0.8, { t, flame: rk.flame, glowBase: rk.lift < 5, pilot: rk.pilotWave > 0, pilotWave: rk.pilotWave > 0, egg: Egg.stage(), shake: rk.shake || 0 });
     if (rk.lights > 0) for (let i = 0; i < 4; i++) { const on = Math.sin(t * 16 + i) > 0; if (on) { ctx.save(); ctx.globalAlpha = 0.6; Art.ell(ctx, 170 + (i - 1.5) * 40, World.GROUND + 25 - rk.lift - 140 - (i % 2) * 120, 14, 14, ['#ff3b5c', '#41ff82', '#ffe14a', '#7ee8ff'][i]); ctx.restore(); } }
     Art.astronaut(ctx, 390, 600, 1.1, { t, anim: this.as.anim, at: this.as.at, look: M.clamp((G.pointer.x - 390) / 500, -1, 1) });
     if (!this.here.length) this.drawNest(ctx, t);
