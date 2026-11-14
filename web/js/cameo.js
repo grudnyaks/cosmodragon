@@ -2,7 +2,7 @@
 // Пока он злодей — тянется за вкусняшкой (успей нажать, и он убежит, а ты получишь бонус).
 // Когда он друг — нажми на него, и он подарит конфетку.
 'use strict';
-const CAMEO_GAMES = ['treasure', 'puzzle', 'catch', 'memory', 'bowling', 'maze', 'pop', 'fishing', 'simon', 'stars', 'bunny', 'tower'];
+const CAMEO_GAMES = ['treasure', 'puzzle', 'catch', 'memory', 'bowling', 'maze', 'pop', 'fishing', 'simon', 'stars', 'bunny', 'tower', 'cake', 'shells', 'campfire', 'snowman', 'rainbowpaint', 'colorjars', 'bananas', 'bee', 'bouquet', 'dig', 'pattern', 'robot', 'wires', 'owls'];
 const CAMEO_SAY = {
   sneak: ['Ш-ш-ш! Какая вкусняшка…', 'Ш-ш-ш! Сейчас стащу!', 'Ш-ш-ш! Никто не смотрит?'],
   scared: ['Ш-ш-ш! Заметил! Убегаю!', 'Ш-ш-ш! Ой, поймали!', 'Ш-ш-ш! Ладно, ладно!'],

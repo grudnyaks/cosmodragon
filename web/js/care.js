@@ -1,5 +1,8 @@
+// Режим заботы (тамагочи) выключен по просьбе: потребности, просьбы и вечерний сон не работают.
+// Имена и наряды остаются.
 // Забота о дракончиках как в тамагочи: имена, потребности, наряды и вечерний сон
 'use strict';
+const CARE_ON = false;
 // Четыре потребности: сытость, чистота, радость, бодрость (0..100). Убывают со временем, ничего плохого при нуле не случается.
 const NEEDS = [
   { id: 'food', icon: 'plate', color: '#ff9a3c', perHour: 5, scene: 'lunch' },
@@ -74,11 +77,13 @@ const Care = {
   add(id, need, v) { const p = this.pet(id); p[need] = M.clamp(p[need] + v, 0, 100); S.save(); },
   // самая острая потребность (если меньше порога)
   lowest(id, th) {
+    if (!CARE_ON) return null;
     const p = this.pet(id); let best = null;
     for (const n of NEEDS) if (p[n.id] < (th || 30) && (!best || p[n.id] < p[best.id])) best = n;
     return best;
   },
   mood(id) {
+    if (!CARE_ON) return undefined;
     const p = this.pet(id), m = Math.min(p.food, p.clean, p.fun, p.energy);
     return m < 20 ? 'sad' : (m > 65 ? 'happy' : 'ok');
   },
@@ -109,11 +114,12 @@ const Care = {
   bedMinutes() { const b = this.data().bedtime; if (!b) return null; const [h, m] = b.split(':').map(Number); return h * 60 + m; },
   // поздно ли (с времени сна и до 6 утра)
   late() {
+    if (!CARE_ON) return false;
     const bm = this.bedMinutes(); if (bm == null) return false;
     const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
     return m >= bm || m < 6 * 60;
   },
-  asleep() { return Date.now() < (this.data().sleepUntil || 0); },
+  asleep() { return CARE_ON && Date.now() < (this.data().sleepUntil || 0); },
   // уложили спать — игра «спит» до 7 утра
   goodnight() {
     const d = new Date(); d.setHours(7, 0, 0, 0);

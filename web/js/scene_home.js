@@ -35,10 +35,9 @@ G.scenes.home = {
     this.petUI = {};
     for (const D of this.here) {
       const x = this.drs[D.id].x, ui = this.petUI[D.id] = {};
-      ui.name = UI.add(this, { x, y: 300, w: 190, h: 44, label: Care.name(D.id), fontSize: 24, color: Art.mix(D.body, '#5a4a8a', 0.5),
+      ui.name = UI.add(this, { x, y: 330, w: 190, h: 44, label: Care.name(D.id), fontSize: 24, color: Art.mix(D.body, '#5a4a8a', 0.5),
         onTap: () => { Voice.stop(); G.go('name', { id: D.id }); } });
-      ui.needs = NEEDS.map((N, i) => UI.add(this, { x: x - 87 + i * 58, y: 358, r: 25, color: '#ffffff', need: N.id,
-        draw: (ctx) => this.drawNeed(ctx, D.id, N), onTap: () => this.needTap(D.id, N) }));
+      ui.needs = [];
     }
     const tx = i => G.view.x0 + 52 + i * 78;
     UI.add(this, { x: tx(0), y: 56, r: 33, icon: S.data.music ? 'music' : 'musicOff', color: '#38d6c3', onTap() { Sound.setMusic(!S.data.music); this.icon = S.data.music ? 'music' : 'musicOff'; } });
